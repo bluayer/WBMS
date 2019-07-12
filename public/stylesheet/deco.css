@@ -1,0 +1,51 @@
+	*{
+		font-size: 10px;
+	}
+	body{
+		width:70%;
+		margin:3% auto 0 auto;
+		
+	}
+	nav{
+		width:70%;
+		position:fixed;
+		z-index: 2;
+	}
+	nav h1{
+		float:left;
+		font-size: 3rem;
+		/*margin:3% auto;*/
+	}
+	/*nav #search{
+		float : left;
+	}*/
+	article{
+		position: absolute;
+	    top: 10vw;
+	    width: 59%;
+	    height: 70%;
+	    background: white;
+	    left: 26%;
+	}
+	.real{
+		/*background: pink;*/
+		width:85%;
+		
+		/*height:100%;*/
+		position:relative;
+		left: 15%;
+	}
+	 #map {
+        height: 100%;
+     }
+     #emergency{
+     	border : 2px red solid;
+     	height:20%;
+     }
+
+     /* Responsive */
+     @media screen and (max-width: 1100px){
+
+
+     }
+
