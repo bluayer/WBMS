@@ -22,66 +22,26 @@
           <button type="submit"><i class="fa fa-search"></i></button>
         </form>
       </div>
-      <a href="/statistics">Statistics</a>
-
-<!--       <div class="topnav">
-        <div class="search-container">
-        <form action="">
-          <input type="text" placeholder="Search.." name="search">
-          <button type="submit"><i class="fa fa-search"></i></button>
-        </form>
-        </div>
-
-        <a class="active" href="#home">Home</a>
-        <a href="#statistics">Statistics</a>
-      </div> -->
+      <a href="/main">Maps</a>
 
     </div>  
   </nav>
   <article>
   <div id="emergency">
-    EMERGENCY
+    This is statistics page
   </div>
-  <p></p>
-  <div id="map"></div>
-    <script>
+  
+  <div id="content">
+    <div id="waggle_indiv">
+      Purdue
 
-      var labels = 'waggle waggle';
-      var labelIndex = 0;     
+    </div>
+    <div id="waggle_total">
+      total
+    </div>
+  </div>
 
-      function initMap() {
-        var myLatLng = {lat: -25.363, lng: 131.044};
 
-        var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 4,
-          center: myLatLng
-        });
-
-        var contentString = '<div id="content">'+
-            '<div id="siteNotice">'+
-            '</div>'+
-            '<h1 id="firstHeading" class="firstHeading">Austrailia</h1>'+
-            '<div id="bodyContent">'+
-            '<p><b>Waggle</b>waggle in here <b>holalala</b> ehehhe<p>' +
-            '</div>'+
-            '</div>';
-
-        var infowindow = new google.maps.InfoWindow({
-          content: contentString
-        });
-
-        var marker = new google.maps.Marker({
-          position: myLatLng,
-          map: map,
-          title: 'Autstrailia'
-        });
-        marker.addListener('click', function() {
-          infowindow.open(map, marker);
-        });
-      }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"
-    async defer></script>
   </article>  
   
 </body>
