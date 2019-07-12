@@ -2,8 +2,7 @@
 <html>
   <head>
     <title>Simple Map</title>
-    <meta name="viewport" content="initial-scale=1.0">
-    <meta charset="utf-8">
+    <% include('./header.ejs') %>
     <style>
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
@@ -13,12 +12,13 @@
       /* Optional: Makes the sample page fill the window. */
       html, body {
         height: 100%;
-        margin: 0;
+        margin: 10%;
         padding: 0;
       }
     </style>
   </head>
   <body>
+    <a href="/statistic">statistic</a>
     <div id="map"></div>
     <script>
 
