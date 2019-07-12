@@ -1,33 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>WBMS</title>
-	<meta name="viewport" content="initial-scale=1.0">
+  <title>WBMS</title>
+  <meta name="viewport" content="initial-scale=1.0">
     <meta charset="utf-8">
     <link href="/stylesheet/deco.css" rel="stylesheet" type="text/css" >
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-</head>	
+</head> 
 <body>
-	<nav>
-		<h1>WBMS</h1>
-		<div class="real">
-			<!-- <div id="search">
-				<input type="text">
-				<button>search</button>
-			</div> -->
+  <nav>
+    <h1>WBMS</h1>
+    <div class="real">
+      <!-- <div id="search">
+        <input type="text">
+        <button>search</button>
+      </div> -->
       <div class="search-container">
-        <form action="">
+        <form action="/action_page.php">
           <input type="text" placeholder="Search.." name="search">
           <button type="submit"><i class="fa fa-search"></i></button>
         </form>
       </div>
+      <a href="/statistics">Statistics</a>
 
-			<div>
-				<a href="/main.ejs">Map</a>
-				<a href="/statistics.ejs">Statistics</a>
-			</div>
-      
 <!--       <div class="topnav">
         <div class="search-container">
         <form action="">
@@ -40,14 +36,14 @@
         <a href="#statistics">Statistics</a>
       </div> -->
 
-		</div>	
-	</nav>
-	<article>
-	<div id="emergency">
-		This is statistics
-	</div>
-	<p></p>
-	<div id="map"></div>
+    </div>  
+  </nav>
+  <article>
+  <div id="emergency">
+    EMERGENCY
+  </div>
+  <p></p>
+  <div id="map"></div>
     <script>
 
       var labels = 'waggle waggle';
@@ -86,7 +82,7 @@
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"
     async defer></script>
-	</article>	
-	
+  </article>  
+  
 </body>
 </html>
