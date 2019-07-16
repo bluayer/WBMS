@@ -13,10 +13,6 @@ app.get('/main', (req, res) => {
   res.render('main', { title: 'The index page!' })
 });
 
-app.get('/index', (req, res) => {
-  res.render('index', { title: 'The index page!' })
-});
-
 app.get('/statistics', (req, res) => {
   res.render('statistics', { title: 'The index page!' })
 });
