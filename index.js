@@ -1,22 +1,40 @@
-var express = require('express');
-var app = express();
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
-// app.set('views', __dirname + '/views');
+const app = express();
+
+const Console = console;
+
+// Set env values.
+require('dotenv').config();
+
+// Set DB
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGO, { useNewUrlParser: true });
+const db = mongoose.connection;
+db.once('open', () => {
+  Console.log('DB connected');
+});
+db.on('error', (err) => {
+  Console.log('DB ERROR : ', err);
+});
+
+// Set view engine
 app.set('view engine', 'ejs');
-app.use(express.static("public"));
 
-app.get('/', (req, res) => {
-  res.render('main', { title: 'The index page!' })
-});
+// Set for static file
+app.use(express.static(`${__dirname}/public`));
 
-app.get('/main', (req, res) => {
-  res.render('main', { title: 'The index page!' })
-});
+// Set bodyParser
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/statistics', (req, res) => {
-  res.render('statistics', { title: 'The index page!' })
-});
+// Set routes
+app.use('/', require('./routes/home'));
+app.use('/sensor', require('./routes/sensor'));
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!!');
+// App listening
+app.listen(3000, () => {
+  Console.log('Example app listening on port 3000!');
 });
