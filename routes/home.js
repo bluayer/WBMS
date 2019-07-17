@@ -14,4 +14,9 @@ router.get('/statistic', (req, res) => {
   res.render('statistic');
 });
 
+router.get('/statistics', (req, res) => {
+  res.render('statistics');
+});
+
+
 module.exports = router;
