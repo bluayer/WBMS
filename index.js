@@ -1,43 +1,40 @@
 const express = require('express');
-const path = require('path');
 const mongoose = require('mongoose');
-var bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 
 const app = express();
+
+const Console = console;
 
 // Set env values.
 require('dotenv').config();
 
 // Set DB
-
 mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGO);
-var db = mongoose.connection;
-db.once("open", function(){
-  console.log("DB connected");
+const db = mongoose.connection;
+db.once('open', () => {
+  Console.log('DB connected');
 });
-db.on("error", function(err){
-  console.log("DB ERROR : ", err);
+db.on('error', (err) => {
+  Console.log('DB ERROR : ', err);
 });
-
-// YOU SHOULD ADD MODEL AFTER CONNECTING DB
-// It's very important.
-let sensor = require('./models/Sensor');
 
 // Set view engine
 app.set('view engine', 'ejs');
 
 // Set for static file
-app.use(express.static(__dirname+"/public"));
+app.use(express.static(`${__dirname}/public`));
 
+// Set bodyParser
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Set routes
-app.use("/", require("./routes/home"));
-app.use("/sensor", require("./routes/sensor"));
+app.use('/', require('./routes/home'));
+app.use('/sensor', require('./routes/sensor'));
 
 // App listening
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+app.listen(3000, () => {
+  Console.log('Example app listening on port 3000!');
 });

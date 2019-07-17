@@ -1,14 +1,17 @@
-var express = require("express");
-var router  = express.Router();
+const express = require('express');
 
-// Set Router
+const router = express.Router();
+
+// GET '/'
+// Render index.ejs
 router.get('/', (req, res) => {
-  res.render('index')
+  res.render('index');
 });
 
+// GET '/statistic'
+// Render statistic.ejs
 router.get('/statistic', (req, res) => {
-  res.render('statistic')
+  res.render('statistic');
 });
-
 
 module.exports = router;

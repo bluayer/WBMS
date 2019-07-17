@@ -1,10 +1,11 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
 
-var sensorSchema = new Schema({
-    temperature: Number,
-    soc: Number,
-    date: { type: Date, default: Date.now  }
+const { Schema } = mongoose;
+
+const sensorSchema = new Schema({
+  temperature: Number,
+  soc: Number,
+  date: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('Sensor', sensorSchema);
