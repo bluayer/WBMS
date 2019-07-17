@@ -1,26 +1,39 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Simple Map</title>
-    <% include('./header.ejs') %>
-    <style>
-      /* Always set the map height explicitly to define the size of the div
-       * element that contains the map. */
-      #map {
-        height: 100%;
-      }
-      /* Optional: Makes the sample page fill the window. */
-      html, body {
-        height: 100%;
-        margin: 10%;
-        padding: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <a href="/statistic">statistic</a>
-    <a href="/sensor">sensorTest</a>
-    <div id="map"></div>
+
+<head>
+	<title>WBMS</title>
+	<meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link href="/stylesheet/deco.css" rel="stylesheet" type="text/css" >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+
+</head>	
+<body>
+	<nav>
+		<h1>WBMS</h1>
+		<div class="real">
+      <div class="search-container">
+        <form action="/action_page.php">
+          <input type="text" placeholder="Search.." name="search">
+          <button type="submit"><i class="fa fa-search"></i></button>
+        </form>
+      </div>
+			<a href="/statistics">Statistics</a>
+      <a href="/sensor">sensorTest</a>
+
+		</div>	
+	</nav>
+	<article>
+		<div id=alarm>EMERGENCY</div>
+    <div id="emergency">
+      <p> - Purdue : Only 15% of battery left.</p>
+      <p> - West Lafayette</p>
+      <p> - Chicago</p>
+  	</div>
+	
+	<div id="map"></div>
     <script>
 
       var labels = 'waggle waggle';
@@ -59,5 +72,7 @@
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"
     async defer></script>
-  </body>
+	</article>	
+	
+</body>
 </html>

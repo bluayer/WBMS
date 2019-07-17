@@ -5,7 +5,7 @@ const router = express.Router();
 // GET '/'
 // Render index.ejs
 router.get('/', (req, res) => {
-  res.render('index');
+  res.render('main');
 });
 
 // GET '/statistic'
