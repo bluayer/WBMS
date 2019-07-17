@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
       Console.log(err);
       res.json(err);
     }
-    res.render('test', { sensors });
+    res.render('sensor', { sensors });
   });
 });
 

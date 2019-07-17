@@ -11,7 +11,7 @@ require('dotenv').config();
 
 // Set DB
 mongoose.Promise = global.Promise;
-mongoose.connect(process.env.MONGO);
+mongoose.connect(process.env.MONGO, { useNewUrlParser: true });
 const db = mongoose.connection;
 db.once('open', () => {
   Console.log('DB connected');
