@@ -1,6 +1,6 @@
 // 전압과 전류로 배터리 남은 잔량 계산 후 리턴.
 
-const CalcBatteryRemain = (voltage) => {
+const calcBatteryRemain = (voltage) => {
   let batteryRemain = 0;
   if (voltage > 13.7) {
     batteryRemain = 100;
@@ -46,4 +46,4 @@ const CalcBatteryRemain = (voltage) => {
   return batteryRemain;
 };
 
-module.exports = CalcBatteryRemain;
+module.exports = calcBatteryRemain;

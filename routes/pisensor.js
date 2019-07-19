@@ -1,6 +1,6 @@
 const express = require('express');
 const PiSensor = require('../models/PiSensor');
-const CalcBatteryRemain = require('./CalcBatteryRemain');
+const calcBatteryRemain = require('./calcBatteryRemain');
 const management = require('./management');
 
 const Console = console;
@@ -28,8 +28,8 @@ router.post('/', (req, res) => {
   const {
     id, temperature, voltage, location, date,
   } = req.body;
-  
-  const batteryRemain = CalcBatteryRemain(voltage);
+
+  const batteryRemain = calcBatteryRemain(voltage);
   const piSensor = new PiSensor();
 
   piSensor.id = id;
@@ -46,7 +46,6 @@ router.post('/', (req, res) => {
     }
     Console.log('Save okay');
   });
-  
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
 });
