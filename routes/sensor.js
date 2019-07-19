@@ -1,9 +1,22 @@
 const express = require('express');
+const axios = require('axios');
 const Sensor = require('../models/Sensor');
-const Battery = require('../models/Battery');
 
 const Console = console;
 const router = express.Router();
+
+const kpload = async () => {
+  let i = 0;
+  const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
+  const temp = await JSON.parse(kpjson);
+  const daily_kps = await kpjson.breakdown;
+  const kparray = await new Array();
+
+  for (; i < daily_kps.length; i += 3) {
+    kparray.push(daily_kps[i]);
+  }
+};
+
 
 // GET '/sensor'
 // Just render test.ejs
@@ -36,8 +49,7 @@ router.post('/', (req, res) => {
   });
 
   // battery
-  if (sensor.temperature > )
-  
+  // if (sensor.temperature > )
 
   res.json({ result: 1 });
 });
