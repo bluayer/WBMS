@@ -1,8 +1,6 @@
 <div class="row ">
   <h1>Show sensor DB </h1>
-  <% sensors.forEach(function(sensor) { %>
-    <a> Temperature : </a> <%= sensor.temperature %> <br>
-    <a> SOC : </a> <%= sensor.soc %> <br>
-    <a> Date : </a> <%= sensor.date %> <br><br>
-  <% }) %>
+    <a> Temperature : </a> <%= sensors[0].temperature %> <br>
+    <a> SOC : </a> <%= sensors[0].soc %> <br>
+    <a> Date : </a> <%= sensors[0].date %> <br><br>
 </div>

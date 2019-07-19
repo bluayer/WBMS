@@ -32,7 +32,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Set routes
 app.use('/', require('./routes/home'));
-app.use('/sensor', require('./routes/pisensor'));
+app.use('/pisensor', require('./routes/pisensor'));
 
 // App listening
 app.listen(3000, () => {

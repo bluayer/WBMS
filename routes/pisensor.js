@@ -1,6 +1,7 @@
 const express = require('express');
 const PiSensor = require('../models/PiSensor');
 const CalcBatteryRemain = require('./CalcBatteryRemain');
+const management = require('./management');
 
 const Console = console;
 const router = express.Router();
@@ -13,25 +14,41 @@ router.get('/', (req, res) => {
       Console.log(err);
       res.json(err);
     }
-    res.render('pisensor', { sensors });
+
+    res.render('sensor', { sensors });
   });
 });
 
 // POST '/sensor'
 // Save data at DB
 router.post('/', (req, res) => {
-  const pisensor = new PiSensor();
-  pisensor.temperature = req.body.temperature;
-  pisensor.betteryRemain = CalcBatteryRemain(req.body.voltage);
-  pisensor.date = new Date(req.body.date);
+  const tempMin = 0;
+  const tempMax = 40;
 
-  pisensor.save((err) => {
+  const {
+    id, temperature, voltage, location, date,
+  } = req.body;
+  
+  const batteryRemain = CalcBatteryRemain(voltage);
+  const piSensor = new PiSensor();
+
+  piSensor.id = id;
+  piSensor.temperature = temperature;
+  piSensor.batteryRemain = batteryRemain;
+  piSensor.location = location;
+  piSensor.tempMin = tempMin;
+  piSensor.tempMax = tempMax;
+  piSensor.date = new Date(date);
+
+  piSensor.save((err) => {
     if (err) {
       Console.error(err);
-      res.json({ result: 0 });
     }
+    Console.log('Save okay');
   });
-  res.json({ result: 1 });
+  
+
+  res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
 });
 
 module.exports = router;
