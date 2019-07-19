@@ -1,5 +1,6 @@
 const express = require('express');
 const PiSensor = require('../models/PiSensor');
+const CalcBatteryRemain = require('./CalcBatteryRemain');
 const management = require('./management');
 
 const Console = console;
@@ -8,11 +9,12 @@ const router = express.Router();
 // GET '/sensor'
 // Just render test.ejs
 router.get('/', (req, res) => {
-  PiSensor.find().sort({ date: 1 }).exec((err, sensors) => {
+  PiSensor.find({}).exec((err, sensors) => {
     if (err) {
       Console.log(err);
       res.json(err);
     }
+
     res.render('sensor', { sensors });
   });
 });
@@ -24,9 +26,10 @@ router.post('/', (req, res) => {
   const tempMax = 40;
 
   const {
-    id, temperature, batteryRemain, location, date,
+    id, temperature, voltage, location, date,
   } = req.body;
-
+  
+  const batteryRemain = CalcBatteryRemain(voltage);
   const piSensor = new PiSensor();
 
   piSensor.id = id;
@@ -43,6 +46,7 @@ router.post('/', (req, res) => {
     }
     Console.log('Save okay');
   });
+  
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
 });
