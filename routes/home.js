@@ -18,5 +18,4 @@ router.get('/statistics', (req, res) => {
   res.render('statistics');
 });
 
-
 module.exports = router;
