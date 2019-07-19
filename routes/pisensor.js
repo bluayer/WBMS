@@ -1,10 +1,25 @@
 const express = require('express');
+const axios = require('axios');
+
 const PiSensor = require('../models/PiSensor');
 const calcBatteryRemain = require('./calcBatteryRemain');
 const management = require('./management');
 
 const Console = console;
 const router = express.Router();
+
+const kpload = async () => {
+  let i = 0;
+  const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
+  const temp = await JSON.parse(kpjson);
+  const dailyKps = await kpjson.breakdown;
+  const kparray = [];
+
+  for (; i < dailyKps.length; i += 3) {
+    kparray.push(dailyKps[i]);
+  }
+};
+
 
 // GET '/sensor'
 // Just render test.ejs
