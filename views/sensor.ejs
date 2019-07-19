@@ -5,5 +5,13 @@
     <a> Temperature : </a> <%= sensor.temperature %> <br>
     <a> batteryRemain : </a> <%= sensor.batteryRemain %> <br>
     <a> Date : </a> <%= sensor.date %> <br><br>
+
+    <% if (sensor.batteryRemain < 20) { %>
+      <h3> WARNING!!! </h3><br>
+      <script>
+        alert("Warning!!");
+      </script>
+      <a> Only <%= sensor.batteryRemain %> % remain </a> <br>
+    <% } %>
   <% }); %>
 </div>
