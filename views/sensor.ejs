@@ -1,6 +1,17 @@
 <div class="row ">
   <h1>Show sensor DB </h1>
-    <a> Temperature : </a> <%= sensors[0].temperature %> <br>
-    <a> SOC : </a> <%= sensors[0].soc %> <br>
-    <a> Date : </a> <%= sensors[0].date %> <br><br>
+  <% sensors.forEach((sensor) => {%>
+    <a> id : </a> <%= sensor.id %> <br>
+    <a> Temperature : </a> <%= sensor.temperature %> <br>
+    <a> batteryRemain : </a> <%= sensor.batteryRemain %> <br>
+    <a> Date : </a> <%= sensor.date %> <br><br>
+
+    <% if (sensor.batteryRemain < 20) { %>
+      <h3> WARNING!!! </h3><br>
+      <script>
+        alert("Warning!!");
+      </script>
+      <a> Only <%= sensor.batteryRemain %> % remain </a> <br>
+    <% } %>
+  <% }); %>
 </div>
