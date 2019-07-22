@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const Console = console;
+const port = process.env.PORT || 8080
 
 // Set env values.
 require('dotenv').config();
@@ -35,6 +36,6 @@ app.use('/', require('./routes/home'));
 app.use('/pisensor', require('./routes/pisensor'));
 
 // App listening
-app.listen(3000, () => {
+app.listen(port, () => {
   Console.log('Example app listening on port 3000!');
 });
