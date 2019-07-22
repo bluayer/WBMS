@@ -8,9 +8,6 @@
 
     <% if (sensor.batteryRemain < 20) { %>
       <h3> WARNING!!! </h3><br>
-      <script>
-        alert("Warning!!");
-      </script>
       <a> Only <%= sensor.batteryRemain %> % remain </a> <br>
     <% } %>
   <% }); %>

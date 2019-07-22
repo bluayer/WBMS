@@ -34,8 +34,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Set routes
 app.use('/', require('./routes/home'));
 app.use('/pisensor', require('./routes/pisensor'));
+app.use('/api', require('./routes/api'));
 
 // App listening
 app.listen(port, () => {
-  Console.log('Example app listening on port 3000!');
+  Console.log(`Example app listening on ${port}!`);
 });
