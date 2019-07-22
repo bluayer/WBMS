@@ -9,38 +9,55 @@ const management = require('./management');
 const Console = console;
 const router = express.Router();
 
-// kp value load from json to array
-function pushAsync(kparray, i, dailyKps) {
+function findMaxValue(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      kparray.push(dailyKps[i].kp);
-      Console.log(dailyKps[i].kp);
-      resolve(kparray);
-    }, 10);
+    let Max = dailyKpMax;
+    for (let i = 0; i < dailyKps.length; i += 3) {
+      if (dailyKps[i].kp > Max) {
+        Max = dailyKps[i].kp;
+      }
+    }
+    resolve(Max);
   });
 }
 
 
-async function createArray(kparray, dailyKps) {
-  for (let i = 0; i < dailyKps.length; i += 3) { // for 안에서 비동기 함수가 동작할 것이다.
-    await pushAsync(kparray, i, dailyKps);// promise 를 리턴해야 await 로 사용 가능 하다.
-  }
-}
-
-
+// api를 통해서 하루의 kp 정보를 가져오고, kp-max를 찾아서 반환하는 함수
 const kpload = async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const kpdata = await kpjson.data;
   const dailyKps = await kpdata.breakdown;
-  const kparray = [];
-  await createArray(kparray, dailyKps).then(() => {
-    Console.log(kparray);
+  const dailyKpMax = -1;
+  findMaxValue(dailyKps, dailyKpMax).then((Max) => {
+    Console.log(`Max value : ${Max}`);
+    return new Promise((resolve) => {
+      Console.log(Max);
+      resolve(Max);
+    });
   });
 };
 
 
-cron.schedule('* * * * *', () => {
-  kpload();
+// KP 비교 이후 discon sit 호출
+cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', () => {
+  kpload().then((Max) => {
+  // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
+  // 3일치 배터리 보호 plan을 세워서 보내줘야함
+    Console.log(Max);
+  // let i = 0;
+  // PiSensor.find({}).exec((err, sensors) => {
+  //   if (err) {
+  //     Console.log(err);
+  //   }
+  //   const waggleNum = 4;
+  //   while (i < waggleNum) { // num 미정
+  //     if (sensors[i].kpMax < dailyKpMax) {
+  //       // disconnected_situation 호출
+  //     }
+  //     i += 1;
+  //   }
+  // });
+  });
 });
 
 
