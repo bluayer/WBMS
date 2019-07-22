@@ -1,6 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-
 const PiSensor = require('../models/PiSensor');
 const calcBatteryRemain = require('./calcBatteryRemain');
 const management = require('./management');
@@ -8,16 +7,31 @@ const management = require('./management');
 const Console = console;
 const router = express.Router();
 
-const kpload = async () => {
-  let i = 0;
-  const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
-  const temp = await JSON.parse(kpjson);
-  const dailyKps = await kpjson.breakdown;
-  const kparray = [];
 
-  for (; i < dailyKps.length; i += 3) {
-    kparray.push(dailyKps[i]);
+// kp value load from json to array
+function pushAsync(kparray, i, dailyKps) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      kparray.push(dailyKps[i]);
+      resolve(kparray);
+    }, 10);
+  });
+}
+
+
+async function printAll(kparray, dailyKps) {
+  for (let i = 0; i < dailyKps.length; i + 3) { // for 안에서 비동기 함수가 동작할 것이다.
+    pushAsync(kparray, i, dailyKps);// promise 를 리턴해야 await 로 사용 가능 하다.
   }
+}
+
+
+const kpload = async () => {
+  const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
+  const kp = await JSON.parse(kpjson);
+  const dailyKps = await kp.breakdown[0];
+  const kparray = [];
+  printAll(kparray, dailyKps);
 };
 
 
