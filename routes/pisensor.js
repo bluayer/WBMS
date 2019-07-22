@@ -2,8 +2,8 @@ const express = require('express');
 const axios = require('axios');
 
 const PiSensor = require('../models/PiSensor');
-const calcBatteryRemain = require('./calcBatteryRemain');
-const management = require('./management');
+const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
+const management = require('../public/javascript/management');
 
 const Console = console;
 const router = express.Router();
@@ -21,7 +21,7 @@ const kpload = async () => {
 };
 
 
-// GET '/sensor'
+// GET '/pisensor'
 // Just render test.ejs
 router.get('/', (req, res) => {
   PiSensor.find({}).exec((err, sensors) => {
@@ -58,8 +58,9 @@ router.post('/', (req, res) => {
   piSensor.save((err) => {
     if (err) {
       Console.error(err);
+    } else {
+      Console.log('Save okay');
     }
-    Console.log('Save okay');
   });
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
