@@ -3,76 +3,102 @@
 
 <head>
 	<title>WBMS</title>
-	<meta name="viewport" content="initial-scale=1.0">
-    <meta charset="utf-8">
-    <link href="/stylesheet/deco.css" rel="stylesheet" type="text/css" >
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+    <% include ./header %>
+    <link href="/stylesheet/main.scss" rel="stylesheet" type="text/css" >
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfv6vrJEKeILjV8zh2UeNfWQp35DNJ7nU&callback=initMap" async defer></script>
+    <style>
+      #map {
+        left:0;
+        top:0;
+        height:100%;
+        width:100%;
+        position: absolute;
+      }
+      .map-responsive {
+        overflow:hidden;
+        padding-bottom:56.25%;
+        position:relative;
+        height:0;
+      }
+      .vertical-center {
+        margin: 0 auto;
+      }
+      .link-btn {
+        justify-items: center;
+        margin: auto;
+      }
+      .center{
+        margin: 0 auto;
+        display: block;
+      }
 
+      .right {
+        margin: 0 0 0 auto;
+        display: block;
+      }
+    </style>
 </head>	
 <body>
-	<nav>
-		<h1>WBMS</h1>
-		<div class="real">
-      <div class="search-container">
+  <div class="container">
+    <h1>WBMS</h1>
+    <div class="row">
+      <div class="vertical-center">
         <form action="/action_page.php">
           <input type="text" placeholder="Search.." name="search">
-          <button type="submit"><i class="fa fa-search"></i></button>
+          <button type="button" class="btn btn-success" type="submit">submit</button>
         </form>
       </div>
-      <a href="/statistic">Statistic</a>
-			<a href="/statistics">Statistics</a>
-      <a href="/pisensor">pisensorTest</a>
-		</div>	
-	</nav>
-	<article>
-		<div id=alarm>EMERGENCY</div>
-    <div id="emergency">
-      <p> - Purdue : Only 15% of battery left.</p>
-      <p> - West Lafayette</p>
-      <p> - Chicago</p>
-  	</div>
-	
-	<div id="map"></div>
-    <script>
+    </div>
+    <br>
+    <div class="row">
+      <div class="col">
+        <button type="button" class="btn btn-info" onClick="location.href='/statistic'">Statistic</button>
+      </div>
+      <div class="col">
+        <button type="button" class="btn btn-info center" onClick="location.href='/statistics'">Statistics</button>
+      </div>
+      <div class="col">
+        <button type="button" class="btn btn-info right" onClick="location.href='/pisensor'">pisensorTest</button>
+      </div>
+    </div>
+    <br>
+    <div class="row vertical-center">
+      <div class="col map-responsive">
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+  function initMap() {
+    const locations = [
+      ['Bondi Beach', -33.890542, 151.274856, 4],
+      ['Coogee Beach', -33.923036, 151.259052, 5],
+      ['Cronulla Beach', -34.028249, 151.157507, 3],
+      ['Manly Beach', -33.80010128657071, 151.28747820854187, 2],
+      ['Maroubra Beach', -33.950198, 151.259302, 1]
+    ];
 
-      var labels = 'waggle waggle';
-      var labelIndex = 0;     
+    const map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 10,
+      center: new google.maps.LatLng(locations[0][1], locations[0][2]),
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
 
-      function initMap() {
-        var myLatLng = {lat: -25.363, lng: 131.044};
+    const infowindow = new google.maps.InfoWindow();
+      for (i = 0; i < locations.length; i++) {  
+        marker = new google.maps.Marker({
+        position: new google.maps.LatLng(locations[i][1], locations[i][2]),
+        map: map
+      });
 
-        var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 4,
-          center: myLatLng
-        });
-
-        var contentString = '<div id="content">'+
-            '<div id="siteNotice">'+
-            '</div>'+
-            '<h1 id="firstHeading" class="firstHeading">Austrailia</h1>'+
-            '<div id="bodyContent">'+
-            '<p><b>Waggle</b>waggle in here <b>holalala</b> ehehhe<p>' +
-            '</div>'+
-            '</div>';
-
-        var infowindow = new google.maps.InfoWindow({
-          content: contentString
-        });
-
-        var marker = new google.maps.Marker({
-          position: myLatLng,
-          map: map,
-          title: 'Autstrailia'
-        });
-        marker.addListener('click', function() {
+      google.maps.event.addListener(marker, 'click', ((marker, i) => {
+        return () => {
+          infowindow.setContent(locations[i][0]);
           infowindow.open(map, marker);
-        });
-      }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"
-    async defer></script>
-	</article>	
-	
+        }
+      }) (marker, i));
+    }
+  }
+  </script>
 </body>
 </html>

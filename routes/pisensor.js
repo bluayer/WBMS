@@ -76,7 +76,7 @@ router.get('/', (req, res) => {
 
 // POST '/sensor'
 // Save data at DB
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const tempMin = 0;
   const tempMax = 40;
 
@@ -104,7 +104,7 @@ router.post('/', (req, res) => {
     }
   });
 
-  if (piSensor.date.getHours() === 0){
+  if (piSensor.date.getHours() === 0) {
     const lat = latitude;
     const lon = longitude;
     const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
@@ -117,47 +117,37 @@ router.post('/', (req, res) => {
       await Console.error(err);
     }
     // 하루 최고, 최저 기온
-    const todayTMax = apiData[0]
-    const todayTMin = apiData[0];
-    for(let i = 0; i<8 ;i++){
-      if(apiData[i] > apiData[i+1]){
+    let todayTMax = apiData[0];
+    let todayTMin = apiData[0];
+    for (let i = 0; i < 8; i += 1) {
+      if (apiData[i] > apiData[i + 1]) {
         todayTMax = apiData[i];
-      }
-      else{
-        todayTMax = apiData[i+1];
+      } else {
+        todayTMax = apiData[i + 1];
       }
     }
-    for(let i = 0; i<8 ;i++){
-      if(apiData[i] < apiData[i+1]){
+    for (let i = 0; i < 8; i += 1) {
+      if (apiData[i] < apiData[i + 1]) {
         todayTMin = apiData[i];
-      }
-      else{
-        todayTMin = apiData[i+1];
+      } else {
+        todayTMin = apiData[i + 1];
       }
     }
-    
+
     // 일교차
-    if( 15 > (todayTMax-todayTMin)){
-      //hot
-      if ( todayTMax > 40 ){
-        //HotLoc();
-      }
-      //cold
-      else if ( todayTMin < 5 ){
-        //ColdLoc();
-      }
-      //default
-      else {
+    if ((todayTMax - todayTMin) < 15) {
+      if (todayTMax > 40) { // HOT strategy
+        // HotLoc();
+      } else if (todayTMin < 5) { // COLD strategy
+        // ColdLoc();
+      } else { // DEFAULT strategy
         management.manageTemperature(temperature, tempMax, tempMin);
       }
+    } else {
+      // 평균온도로 유지하기
     }
-    else {
-      //평균온도로 유지하기
-    }
-    
-
-    const date = await new Date(apiData[0].dt_txt);
-    await Console.log(date);
+    // const dateAPI = await new Date(apiData[0].dt_txt);
+    // await Console.log(date);
   }
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
