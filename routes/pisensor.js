@@ -61,7 +61,7 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
   // 3일치 배터리 보호 plan을 세워서 보내줘야함
     Console.log(Max);
-  // let i = 0;
+    let i = 0;
   // PiSensor.find({}).exec((
   // err, sensors) => {
   //   if (err) {
