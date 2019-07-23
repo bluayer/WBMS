@@ -67,10 +67,11 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
         Console.log(err);
       }
       const waggleNum = piLocation.length;
-      let i = 0;
+      // 테스트용
+      await disconnectedSituation.disconnectedSituation(sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
       // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
-      await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
-      // while (i < waggleNum) { // num 미정
+      // await disconnectedSituation.disconnectedSituation(sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+      // while (len i = 0 < waggleNum) { // num 미정
       //   if (sensors[i].kpMax < dailyKpMax) {
       //     await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
       //   }
