@@ -33,8 +33,7 @@ const disconnectedSituation = async (id, latitude, longitude) => {
     }
     // JSON file 만들기
     Console.log(jsonContent);
-    const json = JSON.parse(jsonContent);
-    const data = JSON.stringify(json);
+    const data = JSON.stringify(jsonContent);
     fs.writeFile('disconnectPlan.json', data, (err) => {
       if (err) {
         return Console.error(err);
