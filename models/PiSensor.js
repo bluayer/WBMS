@@ -9,6 +9,7 @@ const piSensorSchema = new Schema({
   location: String,
   tempMin: Number,
   tempMax: Number,
+  kpMax: Number,
   date: { type: Date, default: Date.now },
 });
 
