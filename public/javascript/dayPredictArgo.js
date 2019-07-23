@@ -1,6 +1,10 @@
-const management = require('../public/javascript/management');
+const axios = require('axios');
+const management = require('./management');
 
-async function dayPredictArgo (( latitude, longitude ) => {
+
+const Console = console;
+
+const dayPredictArgo = async (latitude, longitude) => {
   const lat = latitude;
   const lon = longitude;
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
@@ -37,13 +41,13 @@ async function dayPredictArgo (( latitude, longitude ) => {
     } else if (todayTMin < 5) { // COLD strategy
       // ColdLoc();
     } else { // DEFAULT strategy
-      management.manageTemperature(temperature, tempMax, tempMin);
+      // management.manageTemperature(temperature, tempMax, tempMin);
     }
   } else {
     // 평균온도로 유지하기
   }
   // const dateAPI = await new Date(apiData[0].dt_txt);
   // await Console.log(date);
-});
+};
 
 module.exports = { dayPredictArgo };
