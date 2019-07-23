@@ -1,13 +1,16 @@
 const express = require('express');
 const axios = require('axios');
+const PiSensor = require('../models/PiSensor');
 
 const router = express.Router();
 const Console = console;
+
+const piSensor = new PiSensor();
 // GET '/api/'
 // render showApi.ejs
 router.get('/', async (req, res) => {
-  const lat = 40.425869;
-  const lon = -86.908066;
+  const lat = piSensor.latitude;
+  const lon = piSensor.longitude;
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
   let apiData = [];
   try {

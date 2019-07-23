@@ -81,7 +81,7 @@ router.post('/', (req, res) => {
   const tempMax = 40;
 
   const {
-    id, temperature, voltage, location, date,
+    id, temperature, voltage, latitude, longitude, date,
   } = req.body;
 
   const batteryRemain = calcBatteryRemain(voltage);
@@ -90,7 +90,8 @@ router.post('/', (req, res) => {
   piSensor.id = id;
   piSensor.temperature = temperature;
   piSensor.batteryRemain = batteryRemain;
-  piSensor.location = location;
+  piSensor.latitude = latitude;
+  piSensor.longitude = longitude;
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
   piSensor.date = new Date(date);
@@ -102,6 +103,62 @@ router.post('/', (req, res) => {
       Console.log('Save okay');
     }
   });
+
+  if (piSensor.date.getHours() === 0){
+    const lat = latitude;
+    const lon = longitude;
+    const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
+    let apiData = [];
+    try {
+      const response = await axios.get(url);
+      apiData = await response.data.list;
+      await Console.log(apiData);
+    } catch (err) {
+      await Console.error(err);
+    }
+    // 하루 최고, 최저 기온
+    const todayTMax = apiData[0]
+    const todayTMin = apiData[0];
+    for(let i = 0; i<8 ;i++){
+      if(apiData[i] > apiData[i+1]){
+        todayTMax = apiData[i];
+      }
+      else{
+        todayTMax = apiData[i+1];
+      }
+    }
+    for(let i = 0; i<8 ;i++){
+      if(apiData[i] < apiData[i+1]){
+        todayTMin = apiData[i];
+      }
+      else{
+        todayTMin = apiData[i+1];
+      }
+    }
+    
+    // 일교차
+    if( 15 > (todayTMax-todayTMin)){
+      //hot
+      if ( todayTMax > 40 ){
+        //HotLoc();
+      }
+      //cold
+      else if ( todayTMin < 5 ){
+        //ColdLoc();
+      }
+      //default
+      else {
+        management.manageTemperature(temperature, tempMax, tempMin);
+      }
+    }
+    else {
+      //평균온도로 유지하기
+    }
+    
+
+    const date = await new Date(apiData[0].dt_txt);
+    await Console.log(date);
+  }
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
 });
