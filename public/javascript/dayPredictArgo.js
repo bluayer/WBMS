@@ -9,7 +9,8 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   const lon = longitude;
   const piSensor = new PiSensor();
 
-  let temp = piSensor.products.findOne({ id: id.toString() });
+  const temp = piSensor.products.findOne({ id: id.toString() });
+  const currentT = temp.temperature;
 
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
   let apiData = [];
@@ -41,7 +42,7 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   // 일교차
   if ((todayTMax - todayTMin) < 15) {
     if (todayTMax > 40) { // HOT strategy
-      // HotLoc();
+      // HotLoc(currentT);
     } else if (todayTMin < 5) { // COLD strategy
       // ColdLoc();
     } else { // DEFAULT strategy
