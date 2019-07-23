@@ -41,7 +41,7 @@ router.post('/', (req, res) => {
   const tempMax = 40;
 
   const {
-    id, temperature, voltage, location, date,
+    id, temperature, voltage, latitude, longitude, date,
   } = req.body;
 
   const batteryRemain = calcBatteryRemain(voltage);
@@ -50,7 +50,8 @@ router.post('/', (req, res) => {
   piSensor.id = id;
   piSensor.temperature = temperature;
   piSensor.batteryRemain = batteryRemain;
-  piSensor.location = location;
+  piSensor.latitude = latitude;
+  piSensor.longitude = longitude;
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
   piSensor.date = new Date(date);
