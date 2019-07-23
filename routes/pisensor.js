@@ -42,7 +42,7 @@ function findMaxValue(dailyKps, dailyKpMax) {
 
 
 // api를 통해서 하루의 kp 정보를 가져오고, kp-max를 찾아서 반환하는 함수
-function kpLoad(dailyKps, dailyKpMax) {
+async function kpLoad(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
     findMaxValue(dailyKps, dailyKpMax).then((Max) => {
       Console.log(`Max value : ${Max}`);
@@ -58,22 +58,24 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
   const kpdata = await kpjson.data;
   const dailyKps = await kpdata.breakdown;
   const dailyKpMax = -1;
-  kpLoad(dailyKps, dailyKpMax).then((Max) => {
+  await kpLoad(dailyKps, dailyKpMax).then(async (Max) => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
   // 3일치 배터리 보호 plan을 세워서 보내줘야함
-    Console.log(Max);
-    let i = 0;
-    PiSensor.find({}).exec((err, sensors) => {
+    await Console.log(Max);
+    await PiSensor.find({}).exec(async (err, sensors) => {
       if (err) {
         Console.log(err);
       }
       const waggleNum = piLocation.length;
-      while (i < waggleNum) { // num 미정
-        if (sensors[i].kpMax < dailyKpMax) {
-          disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
-        }
-        i += 1;
-      }
+      let i = 0;
+      // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
+      await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
+      // while (i < waggleNum) { // num 미정
+      //   if (sensors[i].kpMax < dailyKpMax) {
+      //     await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
+      //   }
+      //   i += 1;
+      // }
     });
   });
 });
