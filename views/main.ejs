@@ -88,6 +88,7 @@
       });
 
       const infowindow = new google.maps.InfoWindow();
+      const content = ' <a href="http://www.google.com">google</a>'
       for (i = 0; i < locations.length; i++) {  
         marker = new google.maps.Marker({
           position: new google.maps.LatLng(locations[i][1], locations[i][2]),
@@ -96,7 +97,7 @@
 
         google.maps.event.addListener(marker, 'click', ((marker, i) => {
           return () => {
-            infowindow.setContent(locations[i][0]);
+            infowindow.setContent(locations[i][0] + content);
             infowindow.open(map, marker);
           }
         }) (marker, i));
