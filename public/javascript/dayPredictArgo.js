@@ -1,13 +1,15 @@
 const axios = require('axios');
-const management = require('./management');
 const PiSensor = require('../../models/PiSensor');
+const management = require('./management');
 
 const Console = console;
 
-async function dayPredictArgo(id, latitude, longitude) {
+const dayPredictArgo = async (id, latitude, longitude) => {
   const lat = latitude;
   const lon = longitude;
   const piSensor = new PiSensor();
+
+  let temp = piSensor.products.findOne({ id: id.toString() });
 
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
   let apiData = [];
@@ -43,7 +45,7 @@ async function dayPredictArgo(id, latitude, longitude) {
     } else if (todayTMin < 5) { // COLD strategy
       // ColdLoc();
     } else { // DEFAULT strategy
-      management.manageTemperature(pisensor.temperature, pisensor.tempMax, pisensor.tempMin);
+      management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
     }
   } else {
     // 평균온도로 유지하기
