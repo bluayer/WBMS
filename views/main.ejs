@@ -4,7 +4,7 @@
 <head>
 	<title>WBMS</title>
     <% include ./header %>
-    <link href="/stylesheet/main.scss" rel="stylesheet" type="text/css" >
+    <%# <link href="/stylesheet/main.scss" rel="stylesheet" type="text/css" > %>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfv6vrJEKeILjV8zh2UeNfWQp35DNJ7nU&callback=initMap" async defer></script>
     <style>
       #map {
@@ -70,34 +70,38 @@
   </div>
   <script>
   function initMap() {
-    const locations = [
-      ['Bondi Beach', -33.890542, 151.274856, 4],
-      ['Coogee Beach', -33.923036, 151.259052, 5],
-      ['Cronulla Beach', -34.028249, 151.157507, 3],
-      ['Manly Beach', -33.80010128657071, 151.28747820854187, 2],
-      ['Maroubra Beach', -33.950198, 151.259302, 1]
-    ];
+    let locations = [];
 
-    const map = new google.maps.Map(document.getElementById('map'), {
-      zoom: 10,
-      center: new google.maps.LatLng(locations[0][1], locations[0][2]),
-      mapTypeId: google.maps.MapTypeId.ROADMAP
-    });
-
-    const infowindow = new google.maps.InfoWindow();
-      for (i = 0; i < locations.length; i++) {  
-        marker = new google.maps.Marker({
-        position: new google.maps.LatLng(locations[i][1], locations[i][2]),
-        map: map
+    $.ajax({
+      url: "/pisensor/pilocation",
+      type: 'GET',
+      success: function(res) {
+        console.log(res);
+      }
+    }).then((res) => {
+      locations = res;
+    }).then(() => {
+      const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 10,
+        center: new google.maps.LatLng(locations[0][1], locations[0][2]),
+        mapTypeId: google.maps.MapTypeId.ROADMAP
       });
 
-      google.maps.event.addListener(marker, 'click', ((marker, i) => {
-        return () => {
-          infowindow.setContent(locations[i][0]);
-          infowindow.open(map, marker);
-        }
-      }) (marker, i));
-    }
+      const infowindow = new google.maps.InfoWindow();
+      for (i = 0; i < locations.length; i++) {  
+        marker = new google.maps.Marker({
+          position: new google.maps.LatLng(locations[i][1], locations[i][2]),
+          map: map
+        });
+
+        google.maps.event.addListener(marker, 'click', ((marker, i) => {
+          return () => {
+            infowindow.setContent(locations[i][0]);
+            infowindow.open(map, marker);
+          }
+        }) (marker, i));
+      }
+    });
   }
   </script>
 </body>

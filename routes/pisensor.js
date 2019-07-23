@@ -8,6 +8,23 @@ const management = require('../public/javascript/management');
 
 const Console = console;
 const router = express.Router();
+const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
+
+const chkUniquePiId = (id) => {
+  for (let i = 0; i < piLocation.length; i += 1) {
+    if (piLocation[i][0] === id.toString()) {
+      return false; // Not unique
+    }
+  }
+  return true; // Unique
+};
+
+const getPiLocation = () => piLocation;
+
+const setPiLocation = (id, lat, lon) => {
+  const temp = [id, lat, lon];
+  piLocation.push(temp);
+};
 
 function findMaxValue(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
@@ -101,6 +118,9 @@ router.post('/', async (req, res) => {
       Console.error(err);
     } else {
       Console.log('Save okay');
+      if (chkUniquePiId(id) === true) {
+        setPiLocation(id, latitude, longitude);
+      }
     }
   });
 
@@ -151,6 +171,12 @@ router.post('/', async (req, res) => {
   }
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
+});
+
+// GET '/pisensor/pilocation'
+// Just render test.ejs
+router.get('/pilocation', (req, res) => {
+  res.send(getPiLocation());
 });
 
 module.exports = router;
