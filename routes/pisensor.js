@@ -6,6 +6,7 @@ const PiSensor = require('../models/PiSensor');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
 const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
+const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 
 const Console = console;
 const router = express.Router();
@@ -62,19 +63,18 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
   // 3일치 배터리 보호 plan을 세워서 보내줘야함
     Console.log(Max);
     let i = 0;
-  // PiSensor.find({}).exec((
-  // err, sensors) => {
-  //   if (err) {
-  //     Console.log(err);
-  //   }
-  //   const waggleNum = 4;
-  //   while (i < waggleNum) { // num 미정
-  //     if (sensors[i].kpMax < dailyKpMax) {
-  //       // disconnected_situation 호출
-  //     }
-  //     i += 1;
-  //   }
-  // });
+    PiSensor.find({}).exec((err, sensors) => {
+      if (err) {
+        Console.log(err);
+      }
+      const waggleNum = piLocation.length;
+      while (i < waggleNum) { // num 미정
+        if (sensors[i].kpMax < dailyKpMax) {
+          disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
+        }
+        i += 1;
+      }
+    });
   });
 });
 
@@ -126,7 +126,7 @@ router.post('/', (req, res) => {
       }
     }
   });
-  
+
   // 하루마다 알고리즘 부르기
   if (piSensor.date.getHours() === 0) {
     dayPredictArgo.dayPredictArgo(latitude, longitude);
