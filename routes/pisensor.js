@@ -95,7 +95,7 @@ router.get('/', (req, res) => {
 // POST '/pisensor'
 // Save data at DB
 router.post('/', (req, res) => {
-  Console.log(req.body);
+  // Console.log(req.body);
 
   const tempMin = 0;
   const tempMax = 40;
