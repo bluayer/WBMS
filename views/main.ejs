@@ -70,6 +70,7 @@
   </div>
   <script>
   let locations = [];
+  let content = [];
 
   function initMap() {
     
@@ -89,7 +90,7 @@
       });
 
       const infowindow = new google.maps.InfoWindow();
-      const content = ' <a href="http://www.google.com">google</a>'
+      
       for (i = 0; i < locations.length; i++) {  
         marker = new google.maps.Marker({
           id: locations[i][0],
@@ -97,10 +98,14 @@
           map: map
         });
   
+        content[i] = '<a href="/statistic/'
+          + locations[i][0] 
+          + '">statistic</a>';
+
         google.maps.event.addListener(marker, 'click', ((marker, i) => {
           return () => {
             console.log(i);
-            infowindow.setContent(locations[i][0] + content);
+            infowindow.setContent(locations[i][0] + content[i]);
             infowindow.open(map, marker);
           }
         }) (marker, i));
@@ -108,11 +113,12 @@
     }); 
   }
   function searchMarkerbyID () {
+    const infowindow = new google.maps.InfoWindow();
     const ID = document.forms["searchForm"]["search"].value;
     for(i=0; i<locations.length; i++){
       if(ID === locations[i][0]){
         console.log(i);
-        infowindow.setContent(locations[i][0] + content);
+        infowindow.setContent(locations[i][0]+content[i]);
         infowindow.open(map, marker);
       }
     }
