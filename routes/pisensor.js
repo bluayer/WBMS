@@ -129,7 +129,7 @@ router.post('/', (req, res) => {
 
   // 하루마다 알고리즘 부르기
   if (piSensor.date.getHours() === 0) {
-    dayPredictArgo.dayPredictArgo(latitude, longitude);
+    dayPredictArgo.dayPredictArgo(id, latitude, longitude);
   }
 
   res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
