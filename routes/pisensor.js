@@ -11,6 +11,8 @@ const disconnectedSituation = require('../public/javascript/disconnectedSituatio
 const Console = console;
 const router = express.Router();
 const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
+let emergencyData = [];
+
 
 const chkUniquePiId = (id) => {
   for (let i = 0; i < piLocation.length; i += 1) {
@@ -66,17 +68,32 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
       if (err) {
         Console.log(err);
       }
-      const waggleNum = piLocation.length;
+      const waggleNum = sensors.length;
       // 테스트용
       await disconnectedSituation.disconnectedSituation(sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
+      emergencyData = [];
       // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
       // await disconnectedSituation.disconnectedSituation(sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
-      // while (len i = 0 < waggleNum) { // num 미정
-      //   if (sensors[i].kpMax < dailyKpMax) {
-      //     await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude);
-      //   }
-      //   i += 1;
-      // }
+      let i = 0;
+      while (i < waggleNum) { // num 미정
+        if (sensors[i].kpMax < dailyKpMax) {
+          await disconnectedSituation.disconnectedSituation(sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+          let data;
+          data.waggleId = sensors[i].id;
+          data.batteryEmerg = false;
+          data.kpEmerg = true;
+          data.remaining = -1;
+          emergencyData.push(data);
+        } else {
+          let data;
+          data.waggleId = sensors[i].id;
+          data.batteryEmerg = false;
+          data.kpEmerg = false;
+          data.remaining = -1;
+          emergencyData.push(data);
+        }
+        i += 1;
+      }
     });
   });
 });
@@ -135,7 +152,16 @@ router.post('/', (req, res) => {
     dayPredictArgo.dayPredictArgo(latitude, longitude);
   }
 
-  res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
+  if (batteryRemain <= 15) {
+    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    for (let i = 0; i < emergencyData.length; i += 1) {
+      if (emergencyData[i].id === id) {
+        emergencyData[i].batteryEmerg = true;
+        emergencyData[i].batteryRemain = batteryRemain;
+      }
+    }
+    res.render('main', { emergencyData });
+  }
 });
 
 // GET '/pisensor/pilocation'

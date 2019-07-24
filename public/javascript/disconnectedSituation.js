@@ -5,7 +5,7 @@ const management = require('./management');
 const Console = console;
 
 
-const disconnectedSituation = async (latitude, longitude, tMin, tMax) => {
+const disconnectedSituation = async (id, latitude, longitude, tMin, tMax) => {
   const lat = latitude;
   const lon = longitude;
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
@@ -37,6 +37,8 @@ const disconnectedSituation = async (latitude, longitude, tMin, tMax) => {
   } catch (err) {
     await Console.error(err);
   }
+
+  // 프론트에 전송
 };
 
 module.exports = { disconnectedSituation };
