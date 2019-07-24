@@ -4,7 +4,7 @@ const cron = require('node-cron');
 // const schedule = require('node-schedule');
 const PiSensor = require('../models/PiSensor');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
-const management = require('../public/javascript/management');
+// const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
 const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 
@@ -55,7 +55,7 @@ async function kpLoad(dailyKps, dailyKpMax) {
 
 
 // KP 비교 이후 discon sit 호출
-cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
+cron.schedule('15,30,45,00 * * * * *', async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const kpdata = await kpjson.data;
   const dailyKps = await kpdata.breakdown;
@@ -69,32 +69,30 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
         Console.log(err);
       }
       const waggleNum = sensors.length;
-      // 테스트용
-      await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
       emergencyData = [];
       // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
-      // await disconnectedSituation.disconnectedSituation(sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
-      let i = 0;
-      while (i < waggleNum) { // num 미정
-        if (sensors[i].kpMax < dailyKpMax) {
-          await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
-          const data = {};
-          data.waggleId = sensors[i].id;
-          data.batteryEmerg = false;
-          data.kpEmerg = true;
-          data.remaining = -1;
-          emergencyData.push(data);
-        } else {
-          const data = {};
-          data.waggleId = sensors[i].id;
-          data.batteryEmerg = false;
-          data.kpEmerg = false;
-          data.remaining = -1;
-          emergencyData.push(data);
-        }
-        i += 1;
-      }
-      Console.log(emergencyData);
+      await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
+
+      // let i = 0;
+      // while (i < waggleNum) { // num 미정
+      //   if (sensors[i].kpMax <= dailyKpMax) {
+      //     await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+      //     const data = {};
+      //     data.waggleId = sensors[i].id;
+      //     data.batteryEmerg = false;
+      //     data.kpEmerg = true;
+      //     data.remaining = -1;
+      //     emergencyData.push(data);
+      //   } else {
+      //     const data = {};
+      //     data.waggleId = sensors[i].id;
+      //     data.batteryEmerg = false;
+      //     data.kpEmerg = false;
+      //     data.remaining = -1;
+      //     emergencyData.push(data);
+      //   }
+      //   i += 1;
+      // }
     });
   });
 });
@@ -148,7 +146,6 @@ router.post('/', (req, res) => {
     }
   });
 
-  // 하루마다 알고리즘 부르기
   if (piSensor.date.getHours() === 0) {
     dayPredictArgo.dayPredictArgo(latitude, longitude);
   }
