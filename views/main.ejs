@@ -36,6 +36,12 @@
         margin: 0 0 0 auto;
         display: block;
       }
+      #emergency{
+        width:100%;
+        height: 10vmin;
+        border : 1px solid black;
+        margin-bottom: 2px;
+      }
     </style>
 </head>	
 <body>
@@ -62,12 +68,16 @@
       </div>
     </div>
     <br>
+    <div class="row vertical-center" id="emergency">
+      this is emergency box.
+    </div>
     <div class="row vertical-center">
       <div class="col map-responsive">
         <div id="map"></div>
       </div>
     </div>
   </div>
+
   <script>
   function initMap() {
     let locations = [];
