@@ -70,22 +70,22 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
       }
       const waggleNum = sensors.length;
       // 테스트용
-      await disconnectedSituation.disconnectedSituation(sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
+      await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
       emergencyData = [];
       // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
       // await disconnectedSituation.disconnectedSituation(sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
       let i = 0;
       while (i < waggleNum) { // num 미정
         if (sensors[i].kpMax < dailyKpMax) {
-          await disconnectedSituation.disconnectedSituation(sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
-          let data;
+          await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+          const data = {};
           data.waggleId = sensors[i].id;
           data.batteryEmerg = false;
           data.kpEmerg = true;
           data.remaining = -1;
           emergencyData.push(data);
         } else {
-          let data;
+          const data = {};
           data.waggleId = sensors[i].id;
           data.batteryEmerg = false;
           data.kpEmerg = false;
@@ -94,6 +94,7 @@ cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
         }
         i += 1;
       }
+      Console.log(emergencyData);
     });
   });
 });
