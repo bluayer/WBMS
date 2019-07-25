@@ -1,0 +1,8 @@
+<div class="row ">
+  <h1>Show emerge DB </h1>
+  <% emergs.forEach((emergency) => {%>
+    <a> id : </a> <%= emergency.id %> <br>
+    <a> battery : </a> <%= emergency.batteryEmerg %> <br>
+    <a> kp : </a> <%= emergency.kpEmerg %> <br>
+  <% }); %>
+</div>
