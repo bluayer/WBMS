@@ -3,6 +3,7 @@ const axios = require('axios');
 const cron = require('node-cron');
 // const schedule = require('node-schedule');
 const PiSensor = require('../models/PiSensor');
+const PiEmerg = require('../models/PiEmerg');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
 // const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
@@ -11,7 +12,6 @@ const disconnectedSituation = require('../public/javascript/disconnectedSituatio
 const Console = console;
 const router = express.Router();
 const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
-let emergencyData = [];
 
 
 const chkUniquePiId = (id) => {
@@ -69,30 +69,19 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
         Console.log(err);
       }
       const waggleNum = sensors.length;
-      emergencyData = [];
       // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
-      await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
+      // await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
 
-      // let i = 0;
-      // while (i < waggleNum) { // num 미정
-      //   if (sensors[i].kpMax <= dailyKpMax) {
-      //     await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
-      //     const data = {};
-      //     data.waggleId = sensors[i].id;
-      //     data.batteryEmerg = false;
-      //     data.kpEmerg = true;
-      //     data.remaining = -1;
-      //     emergencyData.push(data);
-      //   } else {
-      //     const data = {};
-      //     data.waggleId = sensors[i].id;
-      //     data.batteryEmerg = false;
-      //     data.kpEmerg = false;
-      //     data.remaining = -1;
-      //     emergencyData.push(data);
-      //   }
-      //   i += 1;
-      // }
+      let i = 0;
+      while (i < waggleNum) { // num 미정
+        if (sensors[i].kpMax <= dailyKpMax) {
+          await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+          PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: true } });
+        } else {
+          PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: false } });
+        }
+        i += 1;
+      }
     });
   });
 });
@@ -100,7 +89,7 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
 
 // GET '/pisensor'
 // Just render test.ejs
-router.get('/', (req, res) => {
+router.get('/sensor', (req, res) => {
   PiSensor.find({}).exec((err, sensors) => {
     if (err) {
       Console.log(err);
@@ -134,6 +123,15 @@ router.post('/', (req, res) => {
   piSensor.tempMax = tempMax;
   piSensor.date = new Date(date);
 
+
+  // 아이디 조회한뒤
+  if (batteryRemain <= 15) {
+    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    PiEmerg.update({ id }, { $set: { batteryEmerg: true } });
+  } else {
+    PiEmerg.update({ id }, { $set: { batteryEmerg: false } });
+  }
+
   piSensor.save((err) => {
     if (err) {
       Console.error(err);
@@ -149,17 +147,6 @@ router.post('/', (req, res) => {
   if (piSensor.date.getHours() === 0) {
     dayPredictArgo.dayPredictArgo(latitude, longitude);
   }
-
-  if (batteryRemain <= 15) {
-    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
-    for (let i = 0; i < emergencyData.length; i += 1) {
-      if (emergencyData[i].id === id) {
-        emergencyData[i].batteryEmerg = true;
-        emergencyData[i].batteryRemain = batteryRemain;
-      }
-    }
-    res.render('main', { emergencyData });
-  }
 });
 
 // GET '/pisensor/pilocation'
@@ -167,5 +154,6 @@ router.post('/', (req, res) => {
 router.get('/pilocation', (req, res) => {
   res.send(getPiLocation());
 });
+
 
 module.exports = router;
