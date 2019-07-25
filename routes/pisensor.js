@@ -113,7 +113,8 @@ router.post('/', (req, res) => {
   piSensor.longitude = longitude;
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
-  piSensor.date = new Date(date);
+  // If you want to convert local server time, don't use toUTCString()
+  piSensor.date = new Date(date).toUTCString();
 
   piSensor.save((err) => {
     if (err) {
