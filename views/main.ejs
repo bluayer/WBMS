@@ -43,22 +43,18 @@
     <h1>WBMS</h1>
     <div class="row">
       <div class="vertical-center">
-        <form action="/action_page.php">
-          <input type="text" placeholder="Search.." name="search">
-          <button type="button" class="btn btn-success" type="submit">submit</button>
-        </form>
       </div>
     </div>
     <br>
     <div class="row">
       <div class="col">
-        <button type="button" class="btn btn-info" onClick="location.href='/statistic'">Statistic</button>
+        <form id="searchForm" name="searchForm" onsubmit="return searchMarkerbyID()">
+          <input type="text" placeholder="SearchID.." name="search">
+          <input type="submit" class="btn btn-success" value= "submit">
+        </form>
       </div>
       <div class="col">
-        <button type="button" class="btn btn-info center" onClick="location.href='/statistics'">Statistics</button>
-      </div>
-      <div class="col">
-        <button type="button" class="btn btn-info right" onClick="location.href='/pisensor'">pisensorTest</button>
+        <button type="button" class="btn btn-info center" onClick="location.href='/pisensor'">pisensorTest</button>
       </div>
     </div>
     <br>
@@ -69,9 +65,15 @@
     </div>
   </div>
   <script>
-  function initMap() {
-    let locations = [];
+  let locations = [];
+  let content = [];
+  let markers = [];
+  let infoWindow;
+  let map;
+  let bounds = [];
 
+  function initMap() {
+    
     $.ajax({
       url: "/pisensor/pilocation",
       type: 'GET',
@@ -81,29 +83,63 @@
     }).then((res) => {
       locations = res;
     }).then(() => {
-      const map = new google.maps.Map(document.getElementById('map'), {
+      map = new google.maps.Map(document.getElementById('map'), {
         zoom: 4,
         center: new google.maps.LatLng(locations[0][1], locations[0][2]),
         mapTypeId: google.maps.MapTypeId.ROADMAP
       });
 
-      const infowindow = new google.maps.InfoWindow();
-      const content = ' <a href="http://www.google.com">google</a>'
+      infowindow = new google.maps.InfoWindow();
+
       for (i = 0; i < locations.length; i++) {  
         marker = new google.maps.Marker({
+          id: locations[i][0],
           position: new google.maps.LatLng(locations[i][1], locations[i][2]),
           map: map
         });
+        
+        markers.push(marker);
 
+        bound = new google.maps.LatLngBounds();
+
+        loc = new google.maps.LatLng(marker.position.lat(), marker.position.lng());
+        bound.extend(loc);
+        bounds.push(bound);
+
+        content[i] = '<a href="/statistic/'
+          + locations[i][0] 
+          + '">statistic</a>';
+
+          
         google.maps.event.addListener(marker, 'click', ((marker, i) => {
           return () => {
-            infowindow.setContent(locations[i][0] + content);
+            console.log(i);
+            infowindow.setContent(locations[i][0] + content[i]);
             infowindow.open(map, marker);
+            map.fitBounds(bounds[i]);
+            map.setZoom(map.getZoom() > 12 ? 12 : map.getZoom());
+            map.panToBounds(bounds[i]);
           }
         }) (marker, i));
       }
-    });
+    }); 
   }
+
+  function searchMarkerbyID () {
+    const ID = document.forms["searchForm"]["search"].value;
+    for (i = 0; i < markers.length; i++) {
+      if (ID === markers[i].id) {
+        infowindow.setContent(locations[i][0] + content[i]);
+        infowindow.open(map, markers[i]);
+        map.fitBounds(bounds[i]);
+        map.setZoom(map.getZoom() > 12 ? 12 : map.getZoom());
+        map.panToBounds(bounds[i]);
+      }
+    }
+  }
+  $('#searchForm').submit(function () {
+    return false;
+  });
   </script>
 </body>
 </html>
