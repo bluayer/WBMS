@@ -10,6 +10,7 @@ const dayPredictArgo = require('../public/javascript/dayPredictArgo');
 const Console = console;
 const router = express.Router();
 const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
+const piTempRemain = [['123423', 40, 50], ['123413', 25, 20]];
 
 const chkUniquePiId = (id) => {
   for (let i = 0; i < piLocation.length; i += 1) {
@@ -25,6 +26,13 @@ const getPiLocation = () => piLocation;
 const setPiLocation = (id, lat, lon) => {
   const temp = [id.toString(), lat, lon];
   piLocation.push(temp);
+};
+
+const getPiTempRemain = () => piTempRemain;
+
+const setPiTempRemain = (id, temperature, remain) => {
+  const temp = [id.toString(), temperature, remain];
+  piTempRemain.push(temp);
 };
 
 function findMaxValue(dailyKps, dailyKpMax) {
@@ -122,7 +130,9 @@ router.post('/', (req, res) => {
       Console.log('Save okay');
       if (chkUniquePiId(id) === true) {
         setPiLocation(id, latitude, longitude);
+        setPiTempRemain(id, temperature, batteryRemain);
         Console.log('Set pi Location');
+        Console.log('Set pi Temperature, batteryRemain');
       }
     }
   });
@@ -139,6 +149,11 @@ router.post('/', (req, res) => {
 // Just render test.ejs
 router.get('/pilocation', (req, res) => {
   res.send(getPiLocation());
+});
+
+// GET '/pisensor/piTempRemain'
+router.get('/pitempremain', (req, res) => {
+  res.send(getPiTempRemain());
 });
 
 module.exports = router;
