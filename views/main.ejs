@@ -56,6 +56,7 @@
       }
       .fa-exclamation-triangle{
         color:red;
+        
       }
       #emergency{
         width:40%;
@@ -107,8 +108,17 @@
     <br>
     <br>
     <center>
-      <i class="fas fa-exclamation-triangle faa-flash animated"></i>
+      <i class="fas fa-exclamation-triangle"></i>
       <P>Waggle Emergency</P>
+      <script>
+      function blink(){
+          $('.fa-exclamation-triangle').delay(100).fadeTo(100,0.5).delay(100).fadeTo(100,1, blink);
+      }
+
+      $(document).ready(function() {
+          blink();
+      });
+      </script>
     </center>
     <div class="row vertical-center" id="emergency">
       <p>
