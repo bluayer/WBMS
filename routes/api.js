@@ -14,15 +14,14 @@ router.get('/', async (req, res) => {
   try {
     const response = await axios.get(url);
     apiData = await response.data.list;
-    await Console.log(apiData);
   } catch (err) {
     await Console.error(err);
   }
   // lat, lon으로 표준 시간대를 찾고
   // 표준 시간대 적용
 
-  const date = await new Date(apiData[0].dt_txt);
-  await Console.log(date);
+  // const date = await new Date(apiData[0].dt_txt);
+  // await Console.log(date);
   await res.render('showApi', { apiData });
 });
 
