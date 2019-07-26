@@ -1,6 +1,6 @@
 const express = require('express');
-const PiSensor = require('../models/PiSensor');
 
+const PiSensor = require('../models/PiSensor');
 const PiEmerg = require('../models/PiEmerg');
 
 const router = express.Router();

@@ -75,7 +75,7 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
       let i = 0;
       while (i < waggleNum) { // num 미정
         if (sensors[i].kpMax <= dailyKpMax) {
-          await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+          await disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
           PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: true } });
         } else {
           PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: false } });
@@ -108,7 +108,7 @@ router.post('/', (req, res) => {
   const tempMin = 0;
   const tempMax = 40;
   const {
-    id, temperature, voltage, latitude, longitude, date,
+    id, temperature, voltage, latitude, longitude, date, kpMax,
   } = req.body;
 
   const batteryRemain = calcBatteryRemain(voltage);
@@ -121,13 +121,14 @@ router.post('/', (req, res) => {
   piSensor.longitude = longitude;
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
+  piSensor.kpMax = kpMax;
   // If you want to convert local server time, don't use toUTCString()
   piSensor.date = new Date(date).toUTCString();
 
 
-  // 아이디 조회한뒤
+  // 배터리 잔량을 이용하여 batteryEmerg 값을 갱신한다
   if (batteryRemain <= 15) {
-    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
     PiEmerg.update({ id }, { $set: { batteryEmerg: true } });
   } else {
     PiEmerg.update({ id }, { $set: { batteryEmerg: false } });
