@@ -1,11 +1,11 @@
 const express = require('express');
 const axios = require('axios');
 const cron = require('node-cron');
-// const schedule = require('node-schedule');
+
 const PiSensor = require('../models/PiSensor');
 const PiEmerg = require('../models/PiEmerg');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
-// const management = require('../public/javascript/management');
+
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
 const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 
@@ -55,29 +55,29 @@ async function kpLoad(dailyKps, dailyKpMax) {
 
 
 // KP 비교 이후 discon sit 호출
-cron.schedule('15,30,45,00 * * * * *', async () => {
+cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
-  const kpdata = await kpjson.data;
-  const dailyKps = await kpdata.breakdown;
+  const dailyKps = await kpjson.data.breakdown;
   const dailyKpMax = -1;
   await kpLoad(dailyKps, dailyKpMax).then(async (Max) => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
-  // 3일치 배터리 보호 plan을 세워서 보내줘야함
+  // 5일치 배터리 보호 plan을 세워서 보내줘야함
     await Console.log(Max);
     await PiSensor.find({}).exec(async (err, sensors) => {
       if (err) {
         Console.log(err);
       }
       const waggleNum = sensors.length;
-      // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
-      // await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
 
       let i = 0;
-      while (i < waggleNum) { // num 미정
+      while (i < waggleNum) {
         if (sensors[i].kpMax <= dailyKpMax) {
-          await disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+          // await Console.log('disconnection!');
+          // await disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
           PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: true } });
         } else {
+          // await Console.log(sensors[i].kpMax);
+          // await Console.log('disconnection!');
           PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: false } });
         }
         i += 1;
@@ -108,7 +108,7 @@ router.post('/', (req, res) => {
   const tempMin = 0;
   const tempMax = 40;
   const {
-    id, temperature, voltage, latitude, longitude, date, kpMax,
+    id, temperature, voltage, latitude, longitude, kpMax,
   } = req.body;
 
   const batteryRemain = calcBatteryRemain(voltage);
@@ -123,15 +123,17 @@ router.post('/', (req, res) => {
   piSensor.tempMax = tempMax;
   piSensor.kpMax = kpMax;
   // If you want to convert local server time, don't use toUTCString()
-  piSensor.date = new Date(date).toUTCString();
+  // piSensor.date = new Date(date).toUTCString();
 
 
   // 배터리 잔량을 이용하여 batteryEmerg 값을 갱신한다
   if (batteryRemain <= 15) {
-    disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
     PiEmerg.update({ id }, { $set: { batteryEmerg: true } });
+    Console.log("battery Emerg!!!");
   } else {
     PiEmerg.update({ id }, { $set: { batteryEmerg: false } });
+    Console.log("battery!!!");
   }
 
   piSensor.save((err) => {
