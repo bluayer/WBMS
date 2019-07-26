@@ -30,16 +30,4 @@ router.post('/', (req, res) => {
 });
 
 
-router.get('/emerg', (req, res) => {
-  PiEmerg.find({}).exec((err, emergs) => {
-    if (err) {
-      Console.log(err);
-      res.json(err);
-    }
-
-    res.render('emerg', { emergs });
-  });
-});
-
-
 module.exports = router;

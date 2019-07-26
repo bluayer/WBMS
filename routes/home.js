@@ -1,12 +1,22 @@
 const express = require('express');
 
+const PiEmerg = require('../models/PiEmerg');
+
 const router = express.Router();
+const Console = console;
 
 // GET '/'
 // Render index.ejs
 router.get('/', (req, res) => {
   // emergency 체크
-  res.render('main');
+  PiEmerg.find({}).exec((err, emergs) => {
+    if (err) {
+      Console.log(err);
+      res.json(err);
+    }
+
+    res.render('main', { emergs });
+  });
 });
 
 // GET '/statistic'
