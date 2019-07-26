@@ -3,7 +3,6 @@ const axios = require('axios');
 const PiSensor = require('../../models/PiSensor');
 const management = require('./management');
 
-
 const Console = console;
 
 const dayPredictArgo = async (id, latitude, longitude) => {

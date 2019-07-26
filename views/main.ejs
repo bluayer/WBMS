@@ -5,7 +5,7 @@
 	<title>WBMS</title>
     <% include ./header %>
     <%# <link href="/stylesheet/main.scss" rel="stylesheet" type="text/css" > %>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfv6vrJEKeILjV8zh2UeNfWQp35DNJ7nU&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfv6vrJEKeILjV8zh2UeNfWQp35DNJ7nU&callback=initMap" async defer ></script>
     <style>
       #map {
         left:0;
@@ -41,6 +41,7 @@
         height: 20vmin;
         border : 1px solid black;
         margin-bottom: 1vmin;
+        padding: 1vmin;
       }
     </style>
 </head>	
@@ -65,7 +66,17 @@
     </div>
     <br>
     <div class="row vertical-center" id="emergency">
-      this is emergency box.
+      <p>
+        <% emergs.forEach((emergency) => {%>
+          <% if(emergency.batteryEmerg===true || emergency.kpEmerg===true) {%>
+            <a> <b>id</a> <%= emergency.id %>)</b> 
+            <a> status : </a>
+            <% if(emergency.batteryEmerg === true) { %>
+            <a> Low battery!</a> <% }%> 
+            <% if(emergency.kpEmerg === true) { %>
+            <a> Disconnected !</a> <% }%> <br>
+          <% }}); %>
+      </p>
     </div>
     <div class="row vertical-center">
       <div class="col map-responsive">
@@ -77,6 +88,10 @@
   <script>
   let locations = [];
   let content = [];
+  let markers = [];
+  let infoWindow;
+  let map;
+  let bounds = [];
 
   function initMap() {
     
@@ -89,43 +104,57 @@
     }).then((res) => {
       locations = res;
     }).then(() => {
-      const map = new google.maps.Map(document.getElementById('map'), {
+      map = new google.maps.Map(document.getElementById('map'), {
         zoom: 4,
         center: new google.maps.LatLng(locations[0][1], locations[0][2]),
         mapTypeId: google.maps.MapTypeId.ROADMAP
       });
 
-      const infowindow = new google.maps.InfoWindow();
-      
+      infowindow = new google.maps.InfoWindow();
+
       for (i = 0; i < locations.length; i++) {  
         marker = new google.maps.Marker({
           id: locations[i][0],
           position: new google.maps.LatLng(locations[i][1], locations[i][2]),
           map: map
         });
-  
+        
+        markers.push(marker);
+
+        bound = new google.maps.LatLngBounds();
+
+        loc = new google.maps.LatLng(marker.position.lat(), marker.position.lng());
+        bound.extend(loc);
+        bounds.push(bound);
+
         content[i] = '<a href="/statistic/'
           + locations[i][0] 
           + '">statistic</a>';
 
+          
         google.maps.event.addListener(marker, 'click', ((marker, i) => {
           return () => {
             console.log(i);
             infowindow.setContent(locations[i][0] + content[i]);
             infowindow.open(map, marker);
+            map.fitBounds(bounds[i]);
+            map.setZoom(map.getZoom() > 12 ? 12 : map.getZoom());
+            map.panToBounds(bounds[i]);
           }
         }) (marker, i));
       }
     }); 
   }
+
   function searchMarkerbyID () {
-    const infowindow = new google.maps.InfoWindow();
     const ID = document.forms["searchForm"]["search"].value;
-    for(i=0; i<locations.length; i++){
-      if(ID === locations[i][0]){
-        console.log(i);
-        infowindow.setContent(locations[i][0]+content[i]);
-        infowindow.open(map, marker);
+    for (i = 0; i < markers.length; i++) {
+      if (ID === markers[i].id) {
+        infowindow.setContent(locations[i][0] + content[i]);
+        infowindow.open(map, markers[i]);
+        map.fitBounds(bounds[i]);
+        map.setZoom(map.getZoom() > 12 ? 12 : map.getZoom());
+        map.panToBounds(bounds[i]);
       }
     }
   }
