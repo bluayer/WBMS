@@ -49,22 +49,18 @@
     <h1>WBMS</h1>
     <div class="row">
       <div class="vertical-center">
-        <form action="/action_page.php">
-          <input type="text" placeholder="Search.." name="search">
-          <button type="button" class="btn btn-success" type="submit">submit</button>
-        </form>
       </div>
     </div>
     <br>
     <div class="row">
       <div class="col">
-        <button type="button" class="btn btn-info" onClick="location.href='/statistic'">Statistic</button>
+        <form id="searchForm" name="searchForm" onsubmit="return searchMarkerbyID()">
+          <input type="text" placeholder="SearchID.." name="search">
+          <input type="submit" class="btn btn-success" value= "submit">
+        </form>
       </div>
       <div class="col">
-        <button type="button" class="btn btn-info center" onClick="location.href='/statistics'">Statistics</button>
-      </div>
-      <div class="col">
-        <button type="button" class="btn btn-info right" onClick="location.href='/pisensor'">pisensorTest</button>
+        <button type="button" class="btn btn-info center" onClick="location.href='/pisensor'">pisensorTest</button>
       </div>
     </div>
     <br>
@@ -79,9 +75,11 @@
   </div>
 
   <script>
-  function initMap() {
-    let locations = [];
+  let locations = [];
+  let content = [];
 
+  function initMap() {
+    
     $.ajax({
       url: "/pisensor/pilocation",
       type: 'GET',
@@ -98,22 +96,42 @@
       });
 
       const infowindow = new google.maps.InfoWindow();
-      const content = ' <a href="http://www.google.com">google</a>'
+      
       for (i = 0; i < locations.length; i++) {  
         marker = new google.maps.Marker({
+          id: locations[i][0],
           position: new google.maps.LatLng(locations[i][1], locations[i][2]),
           map: map
         });
+  
+        content[i] = '<a href="/statistic/'
+          + locations[i][0] 
+          + '">statistic</a>';
 
         google.maps.event.addListener(marker, 'click', ((marker, i) => {
           return () => {
-            infowindow.setContent(locations[i][0] + content);
+            console.log(i);
+            infowindow.setContent(locations[i][0] + content[i]);
             infowindow.open(map, marker);
           }
         }) (marker, i));
       }
-    });
+    }); 
   }
+  function searchMarkerbyID () {
+    const infowindow = new google.maps.InfoWindow();
+    const ID = document.forms["searchForm"]["search"].value;
+    for(i=0; i<locations.length; i++){
+      if(ID === locations[i][0]){
+        console.log(i);
+        infowindow.setContent(locations[i][0]+content[i]);
+        infowindow.open(map, marker);
+      }
+    }
+  }
+  $('#searchForm').submit(function () {
+    return false;
+  });
   </script>
 </body>
 </html>

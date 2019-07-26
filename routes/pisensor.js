@@ -114,7 +114,7 @@ router.get('/', (req, res) => {
 // POST '/pisensor'
 // Save data at DB
 router.post('/', (req, res) => {
-  Console.log(req.body);
+  // Console.log(req.body);
 
   const tempMin = 0;
   const tempMax = 40;
@@ -132,7 +132,8 @@ router.post('/', (req, res) => {
   piSensor.longitude = longitude;
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
-  piSensor.date = new Date(date);
+  // If you want to convert local server time, don't use toUTCString()
+  piSensor.date = new Date(date).toUTCString();
 
   piSensor.save((err) => {
     if (err) {
@@ -147,7 +148,7 @@ router.post('/', (req, res) => {
   });
 
   if (piSensor.date.getHours() === 0) {
-    dayPredictArgo.dayPredictArgo(latitude, longitude);
+    dayPredictArgo.dayPredictArgo(id, latitude, longitude);
   }
 
   if (batteryRemain <= 15) {
