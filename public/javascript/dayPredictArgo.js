@@ -28,16 +28,16 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   let todayTMin = apiData[0];
   for (let i = 0; i < 8; i += 1) {
     if (apiData[i].main.temp > apiData[i + 1].main.temp) {
-      todayTMax = apiData[i].main.temp;
+      todayTMax = (apiData[i].main.temp - 273);
     } else {
-      todayTMax = apiData[i + 1].main.temp;
+      todayTMax = (apiData[i + 1].main.temp - 273);
     }
   }
   for (let i = 0; i < 8; i += 1) {
     if (apiData[i].temp < apiData[i + 1].main.temp) {
-      todayTMin = apiData[i].main.temp;
+      todayTMin = (apiData[i].main.temp - 273);
     } else {
-      todayTMin = apiData[i + 1].main.temp;
+      todayTMin = (apiData[i + 1].main.temp - 273);
     }
   }
 
