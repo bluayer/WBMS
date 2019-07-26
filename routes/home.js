@@ -7,6 +7,7 @@ const Console = console;
 // GET '/'
 // Render index.ejs
 router.get('/', (req, res) => {
+  // emergency 체크
   res.render('main');
 });
 
