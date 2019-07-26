@@ -4,8 +4,21 @@
 <head>
 	<title>WBMS</title>
     <% include ./header %>
-    <%# <link href="/stylesheet/main.scss" rel="stylesheet" type="text/css" > %>
+    <%# <link href="/stylesheet/main.css" rel="stylesheet" type="text/css" > %>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
     <style>
+      *{
+        font-size:15px;
+      }
+      h1{
+        font-size:3rem;
+      }
+      h3{
+        font-size: 1.5rem;
+      }
+      p{
+        font-size: 1.2rem;
+      }
       #map {
         left:0;
         top:0;
@@ -35,12 +48,39 @@
         margin: 0 0 0 auto;
         display: block;
       }
+      .container{
+        padding-top:3vmin;
+      }
+      .fas{
+        font-size: 2rem;
+      }
+      .fa-exclamation-triangle{
+        color:red;
+      }
       #emergency{
-        width:100%;
-        height: 20vmin;
-        border : 1px solid black;
-        margin-bottom: 1vmin;
-        padding: 1vmin;
+        width:40%;
+        height: 25vmin;
+        border : 0.2vmin solid #999999;
+        margin-bottom: 10vmin;
+        padding: 2vmin 0vmin 0vmin 2.5vmin;
+        overflow: auto;
+      }
+      @media screen and (max-width: 1100px) {
+        *{
+          font-size: 10px;
+        }
+        #emergency{
+          height:20vmin;
+          
+        }
+      }
+      @media screen and (max-width: 700px) {
+        *{
+          font-size: 7px;
+        }
+        #emergency{
+          height:16vmin;
+        }
       }
     </style>
 </head>	
@@ -64,12 +104,17 @@
       </div>
     </div>
     <br>
+    <br>
+    <br>
+    <center>
+      <i class="fas fa-exclamation-triangle faa-flash animated"></i>
+      <P>Waggle Emergency</P>
+    </center>
     <div class="row vertical-center" id="emergency">
       <p>
         <% emergs.forEach((emergency) => {%>
           <% if(emergency.batteryEmerg===true || emergency.kpEmerg===true) {%>
-            <a> <b>id</a> <%= emergency.id %>)</b> 
-            <a> status : </a>
+            <a> <b>id</a> <%= emergency.id %></b> 
             <% if(emergency.batteryEmerg === true) { %>
             <a> Low battery!</a> <% }%> 
             <% if(emergency.kpEmerg === true) { %>
@@ -77,6 +122,10 @@
           <% }}); %>
       </p>
     </div>
+    <center>
+      <i class="fas fa-globe-asia"></i>
+      <P>Waggle Map</P>
+    </center>
     <div class="row vertical-center">
       <div class="col map-responsive">
         <div id="map"></div>
