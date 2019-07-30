@@ -26,11 +26,11 @@ const getPiIds = () => {
   return promise.then(res => makeOnePiId(res));
 };
 
-const makeOnePiLocation = (id, latitude, longitude) => [id.toString(), latitude, longitude];
+const makeOnePiLocation = (id, latitude, longitude, temperature, batteryRemain) => [id.toString(), latitude, longitude, temperature, batteryRemain];
 
 const getOnePiLocation = (id) => {
-  const promise = PiSensor.findOne({ id }).exec();
-  return promise.then(res => makeOnePiLocation(res.id, res.latitude, res.longitude));
+  const promise = PiSensor.findOne({ id }).sort({ date: -1 }).exec();
+  return promise.then(res => makeOnePiLocation(res.id, res.latitude, res.longitude, res.temperature, res.batteryRemain));
 };
 
 const makePiLocations = (piIds) => {
