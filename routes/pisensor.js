@@ -11,8 +11,41 @@ const disconnectedSituation = require('../public/javascript/disconnectedSituatio
 
 const Console = console;
 const router = express.Router();
-const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
+const piLocation = [];
 
+const makeOnePiId = (arr) => {
+  const data = [];
+  arr.forEach((item) => {
+    data.push(item.id);
+  });
+  return data;
+};
+
+const getPiIds = () => {
+  const promise = PiEmerg.find({}).exec();
+  return promise.then(res => makeOnePiId(res));
+};
+
+const makeOnePiLocation = (id, latitude, longitude, temperature, batteryRemain) => [id.toString(), latitude, longitude, temperature, batteryRemain];
+
+const getOnePiLocation = (id) => {
+  const promise = PiSensor.findOne({ id }).sort({ date: -1 }).exec();
+  return promise.then(res => makeOnePiLocation(res.id, res.latitude, res.longitude, res.temperature, res.batteryRemain));
+};
+
+const makePiLocations = (piIds) => {
+  const locations = [];
+  piIds.forEach((piId) => {
+    locations.push(getOnePiLocation(piId));
+  });
+  return locations;
+};
+
+const getPiLocations = piIds => Promise.all(makePiLocations(piIds))
+  .then(piLocations => piLocations);
+
+const loadPiLocations = () => getPiIds().then(piIds => getPiLocations(piIds))
+  .then(piLocations => piLocations);
 
 const chkUniquePiId = (id) => {
   for (let i = 0; i < piLocation.length; i += 1) {
@@ -22,8 +55,6 @@ const chkUniquePiId = (id) => {
   }
   return true; // Unique
 };
-
-const getPiLocation = () => piLocation;
 
 const setPiLocation = (id, lat, lon) => {
   const temp = [id.toString(), lat, lon];
@@ -47,7 +78,7 @@ function findMaxValue(dailyKps, dailyKpMax) {
 async function kpLoad(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
     findMaxValue(dailyKps, dailyKpMax).then((Max) => {
-      Console.log(`Max value : ${Max}`);
+      // Console.log(`Max value : ${Max}`);
       resolve(Max);
     });
   });
@@ -63,7 +94,7 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
   await kpLoad(dailyKps, dailyKpMax).then(async (Max) => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
   // 3일치 배터리 보호 plan을 세워서 보내줘야함
-    await Console.log(Max);
+    // await Console.log(Max);
     await PiSensor.find({}).exec(async (err, sensors) => {
       if (err) {
         Console.log(err);
@@ -153,7 +184,10 @@ router.post('/', (req, res) => {
 // GET '/pisensor/pilocation'
 // Just render test.ejs
 router.get('/pilocation', (req, res) => {
-  res.send(getPiLocation());
+  loadPiLocations().then((d) => {
+    // Console.log(d);
+    res.send(d);
+  });
 });
 
 
