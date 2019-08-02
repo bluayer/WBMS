@@ -3,14 +3,50 @@ const axios = require('axios');
 const cron = require('node-cron');
 // const schedule = require('node-schedule');
 const PiSensor = require('../models/PiSensor');
+const PiEmerg = require('../models/PiEmerg');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
-const management = require('../public/javascript/management');
+// const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
+const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 
 const Console = console;
 const router = express.Router();
-const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
-const piTempRemain = [['123423', 40, 50], ['123413', 25, 20]];
+
+const piLocation = [];
+
+const makeOnePiId = (arr) => {
+  const data = [];
+  arr.forEach((item) => {
+    data.push(item.id);
+  });
+  return data;
+};
+
+const getPiIds = () => {
+  const promise = PiEmerg.find({}).exec();
+  return promise.then(res => makeOnePiId(res));
+};
+
+const makeOnePiLocation = (id, latitude, longitude, temperature, batteryRemain) => [id.toString(), latitude, longitude, temperature, batteryRemain];
+
+const getOnePiLocation = (id) => {
+  const promise = PiSensor.findOne({ id }).sort({ date: -1 }).exec();
+  return promise.then(res => makeOnePiLocation(res.id, res.latitude, res.longitude, res.temperature, res.batteryRemain));
+};
+
+const makePiLocations = (piIds) => {
+  const locations = [];
+  piIds.forEach((piId) => {
+    locations.push(getOnePiLocation(piId));
+  });
+  return locations;
+};
+
+const getPiLocations = piIds => Promise.all(makePiLocations(piIds))
+  .then(piLocations => piLocations);
+
+const loadPiLocations = () => getPiIds().then(piIds => getPiLocations(piIds))
+  .then(piLocations => piLocations);
 
 const chkUniquePiId = (id) => {
   for (let i = 0; i < piLocation.length; i += 1) {
@@ -20,8 +56,6 @@ const chkUniquePiId = (id) => {
   }
   return true; // Unique
 };
-
-const getPiLocation = () => piLocation;
 
 const setPiLocation = (id, lat, lon) => {
   const temp = [id.toString(), lat, lon];
@@ -49,10 +83,10 @@ function findMaxValue(dailyKps, dailyKpMax) {
 
 
 // api를 통해서 하루의 kp 정보를 가져오고, kp-max를 찾아서 반환하는 함수
-function kpLoad(dailyKps, dailyKpMax) {
+async function kpLoad(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
     findMaxValue(dailyKps, dailyKpMax).then((Max) => {
-      Console.log(`Max value : ${Max}`);
+      // Console.log(`Max value : ${Max}`);
       resolve(Max);
     });
   });
@@ -60,36 +94,41 @@ function kpLoad(dailyKps, dailyKpMax) {
 
 
 // KP 비교 이후 discon sit 호출
-cron.schedule('5,10,15,20,25,30,35,40,45,50,55 * * * * *', async () => {
+cron.schedule('15,30,45,00 * * * * *', async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const kpdata = await kpjson.data;
   const dailyKps = await kpdata.breakdown;
   const dailyKpMax = -1;
-  kpLoad(dailyKps, dailyKpMax).then((Max) => {
+  await kpLoad(dailyKps, dailyKpMax).then(async (Max) => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
   // 3일치 배터리 보호 plan을 세워서 보내줘야함
-    Console.log(Max);
-  // let i = 0;
-  // PiSensor.find({}).exec((
-  // err, sensors) => {
-  //   if (err) {
-  //     Console.log(err);
-  //   }
-  //   const waggleNum = 4;
-  //   while (i < waggleNum) { // num 미정
-  //     if (sensors[i].kpMax < dailyKpMax) {
-  //       // disconnected_situation 호출
-  //     }
-  //     i += 1;
-  //   }
-  // });
+    // await Console.log(Max);
+    await PiSensor.find({}).exec(async (err, sensors) => {
+      if (err) {
+        Console.log(err);
+      }
+      const waggleNum = sensors.length;
+      // **************이 부분 나중에 while loop 안으로 꼭 넣어줘야함!!!*********************
+      // await disconnectedSituation.disconnectedSituation(sensors[0].id, sensors[0].latitude, sensors[0].longitude, sensors[0].tempMin, sensors[0].tempMax);
+
+      let i = 0;
+      while (i < waggleNum) { // num 미정
+        if (sensors[i].kpMax <= dailyKpMax) {
+          await disconnectedSituation.disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
+          PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: true } });
+        } else {
+          PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: false } });
+        }
+        i += 1;
+      }
+    });
   });
 });
 
 
 // GET '/pisensor'
 // Just render test.ejs
-router.get('/', (req, res) => {
+router.get('/sensor', (req, res) => {
   PiSensor.find({}).exec((err, sensors) => {
     if (err) {
       Console.log(err);
@@ -103,7 +142,7 @@ router.get('/', (req, res) => {
 // POST '/pisensor'
 // Save data at DB
 router.post('/', (req, res) => {
-  Console.log(req.body);
+  // Console.log(req.body);
 
   const tempMin = 0;
   const tempMax = 40;
@@ -121,7 +160,17 @@ router.post('/', (req, res) => {
   piSensor.longitude = longitude;
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
-  piSensor.date = new Date(date);
+  // If you want to convert local server time, don't use toUTCString()
+  piSensor.date = new Date(date).toUTCString();
+
+
+  // 아이디 조회한뒤
+  if (batteryRemain <= 15) {
+    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    PiEmerg.update({ id }, { $set: { batteryEmerg: true } });
+  } else {
+    PiEmerg.update({ id }, { $set: { batteryEmerg: false } });
+  }
 
   piSensor.save((err) => {
     if (err) {
@@ -137,23 +186,18 @@ router.post('/', (req, res) => {
     }
   });
 
-  // 하루마다 알고리즘 부르기
   if (piSensor.date.getHours() === 0) {
     dayPredictArgo.dayPredictArgo(id, latitude, longitude);
   }
-
-  res.json(management.makeMessage(temperature, tempMin, tempMax, batteryRemain));
 });
 
 // GET '/pisensor/pilocation'
 // Just render test.ejs
 router.get('/pilocation', (req, res) => {
-  res.send(getPiLocation());
-});
-
-// GET '/pisensor/piTempRemain'
-router.get('/pitempremain', (req, res) => {
-  res.send(getPiTempRemain());
+  loadPiLocations().then((d) => {
+    // Console.log(d);
+    res.send(d);
+  });
 });
 
 module.exports = router;

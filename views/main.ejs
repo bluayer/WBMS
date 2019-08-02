@@ -43,22 +43,18 @@
     <h1>WBMS</h1>
     <div class="row">
       <div class="vertical-center">
-        <form id="searchForm" name="searchForm" onsubmit="return searchMarkerbyID()">
-          <input type="text" placeholder="SearchID.." name="search">
-          <input type="submit" class="btn btn-success" value= "submit">
-        </form>
       </div>
     </div>
     <br>
     <div class="row">
       <div class="col">
-        <button type="button" class="btn btn-info" onClick="location.href='/statistic'">Statistic</button>
+        <form id="searchForm" name="searchForm" onsubmit="return searchMarkerbyID()">
+          <input type="text" placeholder="SearchID.." name="search">
+          <input type="submit" class="btn btn-success" value= "submit">
+        </form>
       </div>
       <div class="col">
-        <button type="button" class="btn btn-info center" onClick="location.href='/statistics'">Statistics</button>
-      </div>
-      <div class="col">
-        <button type="button" class="btn btn-info right" onClick="location.href='/pisensor'">pisensorTest</button>
+        <button type="button" class="btn btn-info center" onClick="location.href='/pisensor'">pisensorTest</button>
       </div>
     </div>
     <br>
@@ -70,7 +66,6 @@
   </div>
   <script>
   let locations = [];
-  let tempRemain = [];
   let content = [];
   let markers = [];
   let infoWindow;
@@ -78,17 +73,6 @@
   let bounds = [];
 
   function initMap() {
-    
-    $.ajax({
-      url: "/pisensor/pitempremain",
-      type: 'GET',
-      success: function(res) {
-        console.log(res);
-      }
-    }).then((res) => {
-      tempRemain = res;
-    });
-
     $.ajax({
       url: "/pisensor/pilocation",
       type: 'GET',
@@ -121,13 +105,11 @@
         bound.extend(loc);
         bounds.push(bound);
 
-        console.log(tempRemain[0][1]);
-
         content[i] = 
           '<br>latitude :' + locations[i][1]
           + '<br>longitude :' + locations[i][2]
-          + '<br>temperature :' + tempRemain[i][1]
-          + '<br>battteryRemain :' + tempRemain[i][2]
+          + '<br>temperature :' + locations[i][3]
+          + '<br>battteryRemain :' + locations[i][4]
           + '<br><a href="/statistic/'
           + locations[i][0]
           + '">statistic</a>';
