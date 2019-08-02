@@ -73,7 +73,6 @@
   let bounds = [];
 
   function initMap() {
-    
     $.ajax({
       url: "/pisensor/pilocation",
       type: 'GET',
@@ -106,10 +105,14 @@
         bound.extend(loc);
         bounds.push(bound);
 
-        content[i] = '<a href="/statistic/'
-          + locations[i][0] 
+        content[i] = 
+          '<br>latitude :' + locations[i][1]
+          + '<br>longitude :' + locations[i][2]
+          + '<br>temperature :' + locations[i][3]
+          + '<br>battteryRemain :' + locations[i][4]
+          + '<br><a href="/statistic/'
+          + locations[i][0]
           + '">statistic</a>';
-
           
         google.maps.event.addListener(marker, 'click', ((marker, i) => {
           return () => {
