@@ -1,29 +1,34 @@
 const Console = console;
 
-const HotLoc = (apiData) => {
-  // 외부온도 기반으로 패키지 온도 예측 배열 생성
-  const todayTData = [];
-  todayTData[0] = (apiData[0].main.temp - 273);
-  for (let i = 0; i < 7; i += 1) {
-    const inclination = apiData[i + 1].main.temp - apiData[i].main.temp;
-    if (inclination > 0) { // 기울기가 양수
-      todayTData[i + 1] = todayTData[i] + (Math.abs(inclination) + 1);
-      Console.log('todayTData :', todayTData[i + 1]);
-      Console.log('apiData :', apiData[i + 1].main.temp);
-    } else if (inclination < 0) { // 기울기가 음수
-      todayTData[i + 1] = todayTData[i] - (Math.abs(inclination) + 1);
-    } else { // 기울기가 0
-      todayTData[i + 1] = todayTData[i];
+const HotLoc = (tempMax, todayT, weather) => {
+  // if it will rain, return default tempMax
+  for (let i = 0; i < 8; i += 1) {
+    if (weather[i] === 'Rain') {
+      return tempMax;
     }
   }
 
-  // tempMax 정하기
-  let hotTempMax = 30;
-  let inclinationMax = todayTData[1] - todayTData[0];
+  // 외부온도 기반으로 패키지 온도 예측 배열 생성
+  const todayPackT = [];
+  todayPackT[0] = todayT[0];
+  for (let i = 0; i < 7; i += 1) {
+    const inclination = todayT[i + 1] - todayT[i];
+    if (inclination > 0) { // 기울기가 양수
+      todayPackT[i + 1] = todayPackT[i] + (Math.abs(inclination) + 1);
+    } else if (inclination < 0) { // 기울기가 음수
+      todayPackT[i + 1] = todayPackT[i] - (Math.abs(inclination) + 1);
+    } else { // 기울기가 0
+      todayPackT[i + 1] = todayPackT[i];
+    }
+  }
+
+  // set tempMax
+  let hotTempMax = tempMax;
+  let inclinationMax = todayPackT[1] - todayPackT[0];
   for (let i = 1; i < 7; i += 1) {
-    if (inclinationMax < (todayTData[i + 1] - todayTData[i])) {
-      inclinationMax = (todayTData[i + 1] - todayTData[i]);
-      hotTempMax = todayTData[i];
+    if (inclinationMax < (todayPackT[i + 1] - todayPackT[i])) {
+      inclinationMax = (todayPackT[i + 1] - todayPackT[i]);
+      hotTempMax = todayPackT[i];
     }
   }
   return hotTempMax;
