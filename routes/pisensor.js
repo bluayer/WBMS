@@ -12,6 +12,7 @@ const disconnectedSituation = require('../public/javascript/disconnectedSituatio
 
 const Console = console;
 const router = express.Router();
+
 const piLocation = [];
 
 const makeOnePiId = (arr) => {
@@ -60,6 +61,13 @@ const chkUniquePiId = (id) => {
 const setPiLocation = (id, lat, lon) => {
   const temp = [id.toString(), lat, lon];
   piLocation.push(temp);
+};
+
+const getPiTempRemain = () => piTempRemain;
+
+const setPiTempRemain = (id, temperature, remain) => {
+  const temp = [id.toString(), temperature, remain];
+  piTempRemain.push(temp);
 };
 
 function findMaxValue(dailyKps, dailyKpMax) {
@@ -178,7 +186,9 @@ router.post('/', async (req, res) => {
       Console.log('Pi Sensor data Save okay');
       if (chkUniquePiId(id) === true) {
         setPiLocation(id, latitude, longitude);
+        setPiTempRemain(id, temperature, batteryRemain);
         Console.log('Set pi Location');
+        Console.log('Set pi Temperature, batteryRemain');
       }
     }
   });
@@ -219,6 +229,5 @@ router.get('/pilocation', (req, res) => {
     res.send(d);
   });
 });
-
 
 module.exports = router;
