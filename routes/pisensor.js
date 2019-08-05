@@ -62,14 +62,6 @@ const setPiLocation = (id, lat, lon) => {
   const temp = [id.toString(), lat, lon];
   piLocation.push(temp);
 };
-
-const getPiTempRemain = () => piTempRemain;
-
-const setPiTempRemain = (id, temperature, remain) => {
-  const temp = [id.toString(), temperature, remain];
-  piTempRemain.push(temp);
-};
-
 function findMaxValue(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
     let Max = dailyKpMax;
@@ -163,7 +155,7 @@ router.post('/', async (req, res) => {
   piSensor.tempMin = tempMin;
   piSensor.tempMax = tempMax;
   // If you want to convert local server time, don't use toUTCString()
-  piSensor.date = new Date(date).toUTCString();
+  piSensor.date = new Date(date);
 
 
   // 아이디 조회한뒤
@@ -186,15 +178,14 @@ router.post('/', async (req, res) => {
       Console.log('Pi Sensor data Save okay');
       if (chkUniquePiId(id) === true) {
         setPiLocation(id, latitude, longitude);
-        setPiTempRemain(id, temperature, batteryRemain);
         Console.log('Set pi Location');
         Console.log('Set pi Temperature, batteryRemain');
       }
     }
   });
-
-  if (piSensor.date.getHours() === 0) {
-    dayPredictArgo.dayPredictArgo(id, latitude, longitude);
+  if (piSensor.date.getUTCHours() === 0) {
+    const res11 = await dayPredictArgo.dayPredictArgo(id, latitude, longitude);
+    await Console.log('Day predict : ', res11);
   }
 
   const stringMsg = JSON.stringify(message);
