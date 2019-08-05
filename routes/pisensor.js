@@ -4,6 +4,7 @@ const cron = require('node-cron');
 // const schedule = require('node-schedule');
 const PiSensor = require('../models/PiSensor');
 const PiEmerg = require('../models/PiEmerg');
+const PiMessage = require('../models/PiMessage');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
 // const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
@@ -120,7 +121,7 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
 
 // GET '/pisensor'
 // Just render test.ejs
-router.get('/sensor', (req, res) => {
+router.get('/', (req, res) => {
   PiSensor.find({}).exec((err, sensors) => {
     if (err) {
       Console.log(err);
@@ -133,11 +134,12 @@ router.get('/sensor', (req, res) => {
 
 // POST '/pisensor'
 // Save data at DB
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   // Console.log(req.body);
-
   const tempMin = 0;
   const tempMax = 40;
+  const message = { action: null };
+
   const {
     id, temperature, voltage, latitude, longitude, date,
   } = req.body;
@@ -158,7 +160,12 @@ router.post('/', (req, res) => {
 
   // 아이디 조회한뒤
   if (batteryRemain <= 15) {
-    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    const actions = await disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
+    // If there's actions,
+    if (actions.length) {
+      message.action = actions;
+    }
+
     PiEmerg.update({ id }, { $set: { batteryEmerg: true } });
   } else {
     PiEmerg.update({ id }, { $set: { batteryEmerg: false } });
@@ -168,7 +175,7 @@ router.post('/', (req, res) => {
     if (err) {
       Console.error(err);
     } else {
-      Console.log('Save okay');
+      Console.log('Pi Sensor data Save okay');
       if (chkUniquePiId(id) === true) {
         setPiLocation(id, latitude, longitude);
         Console.log('Set pi Location');
@@ -179,6 +186,29 @@ router.post('/', (req, res) => {
   if (piSensor.date.getHours() === 0) {
     dayPredictArgo.dayPredictArgo(id, latitude, longitude);
   }
+
+  const stringMsg = JSON.stringify(message);
+  PiMessage.create({ id, stringMsg  }, (err, data) => {
+    if (err) {
+      Console.error(err);
+    } else {
+      Console.log('Pi Msg Save okay');
+      Console.log(data);
+    }
+  });
+
+  return res.json(message);
+});
+
+router.get('/showmsg', (req, res) => {
+  PiMessage.find({}).exec((err, messages) => {
+    if (err) {
+      Console.log(err);
+      res.json(err);
+    }
+
+    res.render('message', { messages });
+  });
 });
 
 // GET '/pisensor/pilocation'
