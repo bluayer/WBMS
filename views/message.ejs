@@ -1,0 +1,12 @@
+<div class="row ">
+  <h1>Show message DB </h1>
+    <% messages.forEach((msg) => {%>
+      <div class="card" style="width: 18rem;">
+        <div class="card-body">
+          <h5 class="card-title"> id : <%= msg.id %> </h5> <br>
+          <p class="card-text"> msg : <%= msg.message %> </p> <br>
+          <p class="card-text"> date : </a> <%= msg.date %> </p> <br><br>
+        </div>
+      </div>
+    <% }); %>
+</div>
