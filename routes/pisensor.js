@@ -6,7 +6,7 @@ const PiSensor = require('../models/PiSensor');
 const PiEmerg = require('../models/PiEmerg');
 const PiMessage = require('../models/PiMessage');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
-// const management = require('../public/javascript/management');
+const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
 const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 const piLocationFunc = require('../public/javascript/piLocationFunc');
@@ -104,7 +104,7 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
   // Console.log(req.body);
   const tempMin = 0;
-  const tempMax = 40;
+  const tempMax = 30;
   const message = { action: null };
 
   const {
@@ -153,10 +153,14 @@ router.post('/', async (req, res) => {
     }
   });
 
+  // set tempMin, tempMax if it's extreme weather.
   if (objectDate.getUTCHours() === 0) {
-    // const res11 = await dayPredictArgo.dayPredictArgo(id, latitude, longitude);
-    // await Console.log('Day predict : ', res11);
+    await dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
   }
+  // when data come, return action
+  const temp = await PiSensor.findOne({ date: objectDate }).exec();
+  await Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
+  // message function으로 변환 필요
 
   const stringMsg = JSON.stringify(message);
   PiMessage.create({ id, message: stringMsg }, (err, data) => {

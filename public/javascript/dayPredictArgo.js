@@ -1,23 +1,22 @@
 const axios = require('axios');
 
 const PiSensor = require('../../models/PiSensor');
-const management = require('./management');
-const HotLoc = require('./HotLoc');
+const hotLoc = require('./hotLoc');
+const coldLoc = require('./coldLoc');
 
 const Console = console;
 
-const dayPredictArgo = async (id, latitude, longitude) => {
+const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
   const lat = latitude;
   const lon = longitude;
 
-  const temp = await PiSensor.findOne({ id }).exec();
+  const temp = await PiSensor.findOne().sort({ date: -1 }).exec();
 
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
   let apiData = [];
   try {
     const response = await axios.get(url);
     apiData = await response.data.list;
-    // await Console.log(apiData);
   } catch (err) {
     await Console.error(err);
   }
@@ -40,19 +39,17 @@ const dayPredictArgo = async (id, latitude, longitude) => {
     }
   }
   // 일교차로 먼저 분류
-  let response = management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
-    if (todayTMax > 24) { // HOT strategy
-      response = management.manageTemperature(temp.temperature, HotLoc.HotLoc(temp.tempMax, todayT, weather), temp.tempMin);
+    if (todayTMax > 30) { // HOT strategy
+      await PiSensor.findOneAndUpdate({ id, date: objectDate }, { tempMax: hotLoc.hotLoc(temp.tempMax, todayT, weather) }, { new: true });
     } else if (todayTMin < 5) { // ColdLoc strategy
-      // ColdLoc();
+      await PiSensor.findOneAndUpdate({ id, date: objectDate }, { tempMin: coldLoc.coldLoc(temp.tempMin, todayT) }, { new: true });
     }
   } else { // 일교차가 큰 경우
     // management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   }
   // const dateAPI = await new Date(apiData[0].dt_txt);
   // await Console.log(date);
-  return response;
 };
 
 module.exports = { dayPredictArgo };
