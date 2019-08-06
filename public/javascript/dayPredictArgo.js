@@ -1,8 +1,8 @@
 const axios = require('axios');
 
 const PiSensor = require('../../models/PiSensor');
-const management = require('./management');
-const HotLoc = require('./HotLoc');
+const hotLoc = require('./hotLoc');
+const coldLoc = require('./coldLoc');
 
 const Console = console;
 
@@ -17,7 +17,6 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   try {
     const response = await axios.get(url);
     apiData = await response.data.list;
-    // await Console.log(apiData);
   } catch (err) {
     await Console.error(err);
   }
@@ -40,19 +39,21 @@ const dayPredictArgo = async (id, latitude, longitude) => {
     }
   }
   // 일교차로 먼저 분류
-  let response = management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
-    if (todayTMax > 24) { // HOT strategy
-      response = management.manageTemperature(temp.temperature, HotLoc.HotLoc(temp.tempMax, todayT, weather), temp.tempMin);
+    if (todayTMax > 30) { // HOT strategy
+      PiSensor.findOneAndUpdate({ id }, { tempMax: hotLoc.hotLoc(temp.tempMax, todayT, weather) }, { new: true });
     } else if (todayTMin < 5) { // ColdLoc strategy
-      // ColdLoc();
+      await PiSensor.findOneAndUpdate({ id }, { tempMin: coldLoc.coldLoc(temp.tempMin, todayT) }, { new: true });
+      // temp.tempMin = coldLoc.coldLoc(temp.tempMin, todayT);
+      await PiSensor.findOne({ id }).exec((err, data) => {
+        Console.log(data);
+      });
     }
   } else { // 일교차가 큰 경우
     // management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   }
   // const dateAPI = await new Date(apiData[0].dt_txt);
   // await Console.log(date);
-  return response;
 };
 
 module.exports = { dayPredictArgo };

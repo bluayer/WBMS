@@ -5,7 +5,7 @@ const cron = require('node-cron');
 const PiSensor = require('../models/PiSensor');
 const PiEmerg = require('../models/PiEmerg');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
-// const management = require('../public/javascript/management');
+const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
 const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 
@@ -137,7 +137,7 @@ router.post('/', async (req, res) => {
   // Console.log(req.body);
 
   const tempMin = 0;
-  const tempMax = 40;
+  const tempMax = 30;
   const {
     id, temperature, voltage, latitude, longitude, date,
   } = req.body;
@@ -176,10 +176,14 @@ router.post('/', async (req, res) => {
       }
     }
   });
+  // set tempMin, tempMax if it's extreme weather.
   if (piSensor.date.getUTCHours() === 0) {
-    const res11 = await dayPredictArgo.dayPredictArgo(id, latitude, longitude);
-    await Console.log('Day predict : ', res11);
+    await dayPredictArgo.dayPredictArgo(id, latitude, longitude);
+    await Console.log(management.manageTemperature(temperature, piSensor.tempMin, piSensor.tempMax));
   }
+  // when data come, return action
+
+  await Console.log(PiSensor.tempMin, '/', PiSensor.tempMax);
 });
 
 // GET '/pisensor/pilocation'
