@@ -127,13 +127,6 @@ const chkDisconnectedSituation = async (
   return response;
 };
 
-const formatingMsg = (actions) => {
-  const message = {};
-  message.action = actions;
-
-  return message;
-};
-
 // GET '/pisensor'
 // Just render test.ejs
 router.get('/', (req, res) => {
@@ -153,7 +146,6 @@ router.post('/', async (req, res) => {
   // Console.log(req.body);
   const tempMin = 0;
   const tempMax = 30;
-  let message = { action: null };
 
   const {
     id, temperature, voltage, latitude, longitude, kpMax, date,
@@ -177,12 +169,40 @@ router.post('/', async (req, res) => {
       });
     }
   }).then(() => {
-    chkDisconnectedSituation(batteryRemain, id, latitude, longitude, tempMin, tempMax)
-      .then(actions => formatingMsg(actions))
+    // check it is disconnected Situation
+    // Reason : batteryRemain < 15
+    chkDisconnectedSituation(
+      batteryRemain, id, latitude, longitude, tempMin, tempMax,
+    )
+      .then((actions) => {
+        // set tempMin, tempMax if it's extreme weather.
+        if (objectDate.getUTCHours() === 0) {
+          dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
+        }
+        return actions;
+      })
+      .then(async (forecastAction) => {
+        const sense = PiInfo.findOne({ id }).exec();
+        return sense.then((senseData) => {
+          const premsg = { action: [] };
+          if (forecastAction !== null) {
+            premsg.action.push(management.manageTemperature(
+              temperature, senseData.tempMin, senseData.tempMax,
+            ));
+            forecastAction.forEach((action) => {
+              premsg.action.push(action);
+            });
+            return premsg;
+          }
+          premsg.action.push(management.manageTemperature(
+            temperature, senseData.tempMin, senseData.tempMax,
+          ));
+          return premsg;
+        });
+      })
       .then((msg) => {
+        res.send(msg);
         // make Message
-        message = msg;
-        res.send(message);
         const stringMsg = JSON.stringify(msg);
         PiMessage.create({ id, message: stringMsg }, (msgError, d) => {
           if (msgError) {
@@ -192,15 +212,8 @@ router.post('/', async (req, res) => {
             Console.log(d);
           }
         });
+        return msg;
       });
-
-    // set tempMin, tempMax if it's extreme weather.
-    if (objectDate.getUTCHours() === 0) {
-      dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
-    }
-
-    const temp = PiSensor.findOne({ date: objectDate }).exec();
-    Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
   });
 
   PiSensor.create({
@@ -213,11 +226,6 @@ router.post('/', async (req, res) => {
       Console.log(data);
     }
   });
-
-  // when data come, return action
-  // const temp = await PiSensor.findOne({ date: objectDate }).exec();
-  // await Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
-  // message function으로 변환 필요
 
   return res.status(200);
 });
