@@ -6,29 +6,9 @@ const coldLoc = require('./coldLoc');
 
 const Console = console;
 
-const temperatureArr = [];
-// 외부온도 기반으로 패키지 온도 예측 배열 생성
-const createPackT = (tempArr, positiveInclination, nagativeInclination) => {
-  const positiveI = positiveInclination;
-  const nagativeI = nagativeInclination;
-  
-  const PackT = [];
-  PackT[0] = tempArr[0];
-  for (let i = 0; i < tempArr.length; i += 1) {
-    const inclination = tempArr[i + 1] - tempArr[i];
-    if (inclination > 0) { // 기울기가 양수
-      PackT[i + 1] = PackT[i] + (Math.abs(inclination) + positiveI).toFixed(3);
-    } else if (inclination < 0) { // 기울기가 음수
-      PackT[i + 1] = PackT[i] - (Math.abs(inclination) + nagativeI).toFixed(3);
-    } else { // 기울기가 0
-      PackT[i + 1] = PackT[i];
-    }
-  }
+const packageTArr = [];
 
-  return PackT;
-};
-
-const dayPredictArgo = async (id, latitude, longitude) => {
+const dayPredictArgo = async (id, latitude, longitude, day) => {
   const lat = latitude;
   const lon = longitude;
 
@@ -44,6 +24,7 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   }
   // temperatureArr is apiData.main.temp array
   const weather = [];
+  const temperatureArr = [];
   for (let i = 0; i < apiData.length; i += 1) {
     temperatureArr[i] = (apiData[i].main.temp - 273).toFixed(3);
     weather[i] = apiData[i].weather[0].main;
@@ -53,7 +34,7 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   const todayT = [];
   let todayTMax = temperatureArr[0];
   let todayTMin = temperatureArr[0];
-  for (let i = 1; i < 8; i += 1) {
+  for (let i = (day - 1); i < (day + 7); i += 1) {
     todayT[i] = temperatureArr[i];
     if (todayTMax < todayT[i]) {
       todayTMax = todayT[i];
@@ -66,14 +47,12 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   // 일교차로 먼저 분류
   if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
     if (todayTMax > 20) { // HOT strategy
-      const hotpackT = createPackT(todayT, 0.9, 0.5);
       await PiInfo.findOneAndUpdate({ id }, {
-        tempMax: hotLoc.hotLoc(temp.tempMax, hotpackT, weather),
+        tempMax: hotLoc.hotLoc(temp.tempMax, todayT, weather),
       }, { new: true });
     } else if (todayTMin < 5) { // ColdLoc strategy
-      const coldpackT = createPackT(todayT, 0.03, 0.08);
       await PiInfo.findOneAndUpdate({ id }, {
-        tempMin: coldLoc.coldLoc(temp.tempMin, coldpackT),
+        tempMin: coldLoc.coldLoc(temp.tempMin, todayT),
       }, { new: true });
     }
   } else { // 일교차가 큰 경우
@@ -83,9 +62,11 @@ const dayPredictArgo = async (id, latitude, longitude) => {
   // await Console.log(date);
 };
 
-const getPackageTArr = (id, latitude, longitude) => {
-  dayPredictArgo(id, latitude, longitude);
-  return createPackT(temperatureArr, 0.2, 0.2);
+const getPackageTArr = (id, latitude, longitude, day) => {
+  dayPredictArgo(id, latitude, longitude, day);
+  return packageTArr;
 };
-
-module.exports = { dayPredictArgo };
+const setPackageTArr = (packT) => {
+  packageTArr.push(packT);
+};
+module.exports = { dayPredictArgo, getPackageTArr, setPackageTArr };
