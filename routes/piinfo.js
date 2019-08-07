@@ -1,11 +1,11 @@
 const express = require('express');
 // const schedule = require('node-schedule');
-const PiEmerg = require('../models/PiEmerg');
+const PiInfo = require('../models/PiInfo');
 
 const Console = console;
 const router = express.Router();
 
-// POST '/piemerg'
+// POST '/PiInfo'
 // Save data at DB
 router.post('/', (req, res) => {
   Console.log(req.body);
@@ -14,24 +14,26 @@ router.post('/', (req, res) => {
     id, batteryEmerg, kpEmerg,
   } = req.body;
 
-  const piEmerg = new PiEmerg();
+  const piInfo = new PiInfo();
 
-  piEmerg.id = id;
-  piEmerg.batteryEmerg = batteryEmerg;
-  piEmerg.kpEmerg = kpEmerg;
+  piInfo.id = id;
+  piInfo.batteryEmerg = batteryEmerg;
+  piInfo.kpEmerg = kpEmerg;
 
-  piEmerg.save((err) => {
+  PiInfo.save((err) => {
     if (err) {
       Console.error(err);
     } else {
       Console.log('Save okay');
     }
   });
+
+  return res.status(200);
 });
 
 
 router.get('/emerg', (req, res) => {
-  PiEmerg.find({}).exec((err, emergs) => {
+  PiInfo.find({}).exec((err, emergs) => {
     if (err) {
       Console.log(err);
       res.json(err);
