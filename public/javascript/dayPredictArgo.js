@@ -11,6 +11,7 @@ const packageTArr = [];
 const dayPredictArgo = async (id, latitude, longitude, day) => {
   const lat = latitude;
   const lon = longitude;
+  cosnt days = day*8;
 
   const temp = await PiInfo.findOne({ id }).exec();
 
@@ -34,7 +35,7 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
   const todayT = [];
   let todayTMax = temperatureArr[0];
   let todayTMin = temperatureArr[0];
-  for (let i = (day - 1); i < (day + 7); i += 1) {
+  for (let i = (days-8); i < days; i += 1) {
     todayT[i] = temperatureArr[i];
     if (todayTMax < todayT[i]) {
       todayTMax = todayT[i];
