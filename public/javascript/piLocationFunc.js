@@ -1,5 +1,7 @@
-const PiEmerg = require('../../models/PiEmerg');
+const PiInfo = require('../../models/PiInfo');
 const PiSensor = require('../../models/PiSensor');
+
+const Console = console;
 
 const makeOnePiId = (arr) => {
   const data = [];
@@ -10,7 +12,7 @@ const makeOnePiId = (arr) => {
 };
 
 const getPiIds = () => {
-  const promise = PiEmerg.find({}).exec();
+  const promise = PiInfo.find({}).exec();
   return promise.then(res => makeOnePiId(res));
 };
 
@@ -18,22 +20,31 @@ const makeOnePiLocation = (
   id, latitude, longitude, temperature, batteryRemain,
 ) => [id.toString(), latitude, longitude, temperature, batteryRemain];
 
-const getOnePiLocation = (piId) => {
-  const promise = PiSensor.findOne({ id: piId }).sort({ date: -1 }).exec();
-  return promise.then((res) => {
-    const {
-      id, latitude, longitude, temperature, batteryRemain,
-    } = res;
+const getInfo = (piId) => {
+  const info = PiInfo.findOne({ id: piId }).exec();
 
-    return makeOnePiLocation(id, latitude, longitude, temperature, batteryRemain);
-  });
+  return info.then(res => res);
+};
+
+const getSense = (piId) => {
+  const sense = PiSensor.findOne({ id: piId }).sort({ date: -1 }).exec();
+
+  return sense.then(res => res);
+};
+
+
+const getOnePiLocation = async (piId) => {
+  const { id, latitude, longitude } = await getInfo(piId);
+  const { temperature, batteryRemain } = await getSense(piId);
+
+  return makeOnePiLocation(id, latitude, longitude, temperature, batteryRemain);
 };
 
 const makePiLocations = (piIds) => {
   const locations = [];
   piIds.forEach((piId) => {
     locations.push(getOnePiLocation(piId));
-    console.log(locations);
+    Console.log(locations);
   });
   return locations;
 };

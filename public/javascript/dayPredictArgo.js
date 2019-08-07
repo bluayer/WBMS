@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const PiSensor = require('../../models/PiSensor');
+const PiInfo = require('../../models/PiInfo');
 const hotLoc = require('./hotLoc');
 const coldLoc = require('./coldLoc');
 
@@ -10,7 +10,7 @@ const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
   const lat = latitude;
   const lon = longitude;
 
-  const temp = await PiSensor.findOne().sort({ date: -1 }).exec();
+  const temp = await PiInfo.findOne({ id }).exec();
 
   const url = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&APPID=${process.env.OWM_API}`;
   let apiData = [];
@@ -25,7 +25,7 @@ const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
   const weather = [];
   for (let i = 0; i < 8; i += 1) {
     todayT[i] = (apiData[i].main.temp - 273).toFixed(3);
-    weather[i] = apiData[i].weather.main;
+    weather[i] = apiData[i].weather[0].main;
   }
   // 하루 최고, 최저 기온
   let todayTMax = todayT[0];
@@ -40,10 +40,17 @@ const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
   }
   // 일교차로 먼저 분류
   if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
-    if (todayTMax > 30) { // HOT strategy
-      await PiSensor.findOneAndUpdate({ id, date: objectDate }, { tempMax: hotLoc.hotLoc(temp.tempMax, todayT, weather) }, { new: true });
+    if (todayTMax > 20) { // HOT strategy
+      Console.log('hot hot i"m so hot');
+      Console.log(temp.tempMax);
+      Console.log(hotLoc.hotLoc(temp.tempMax, todayT, weather));
+      await PiInfo.findOneAndUpdate({ id }, {
+        tempMax: hotLoc.hotLoc(temp.tempMax, todayT, weather),
+      }, { new: true });
     } else if (todayTMin < 5) { // ColdLoc strategy
-      await PiSensor.findOneAndUpdate({ id, date: objectDate }, { tempMin: coldLoc.coldLoc(temp.tempMin, todayT) }, { new: true });
+      await PiInfo.findOneAndUpdate({ id }, {
+        tempMin: coldLoc.coldLoc(temp.tempMin, todayT),
+      }, { new: true });
     }
   } else { // 일교차가 큰 경우
     // management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);

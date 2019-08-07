@@ -3,7 +3,7 @@ const axios = require('axios');
 const cron = require('node-cron');
 
 const PiSensor = require('../models/PiSensor');
-const PiEmerg = require('../models/PiEmerg');
+const PiInfo = require('../models/PiInfo');
 const PiMessage = require('../models/PiMessage');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
 const management = require('../public/javascript/management');
@@ -61,6 +61,7 @@ cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
   await kpLoad(dailyKps, dailyKpMax).then(async () => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
   // 3일치 배터리 보호 plan을 세워서 보내줘야함
+    const options = { upsert: true, new: true };
     await PiSensor.find({}).exec(async (err, sensors) => {
       if (err) {
         Console.log(err);
@@ -74,9 +75,21 @@ cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
           disconnectedSituationAction(sensors[i]);
 
           // If there's actions,
-          PiEmerg.update({ id }, { kpEmerg: true });
+          PiInfo.findOneAndUpdate({ id }, { kpEmerg: true }, options)
+            .exec((queryErr, data) => {
+              if (err) {
+                Console.log(queryErr);
+              }
+              // Console.log(data);
+            });
         } else {
-          PiEmerg.update({ id }, { kpEmerg: false });
+          PiInfo.findOneAndUpdate({ id }, { kpEmerg: false }, options)
+            .exec((queryErr, data) => {
+              if (err) {
+                Console.log(queryErr);
+              }
+              // Console.log(data);
+            });
         }
         i += 1;
       }
@@ -84,6 +97,41 @@ cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
   });
 });
 
+const chkDisconnectedSituation = async (
+  batteryRemain, id, latitude, longitude, tempMin, tempMax,
+) => {
+  let response = null;
+  if (batteryRemain <= 15) {
+    response = await disconnectedSituation.disconnectedSituation(
+      id, latitude, longitude, tempMin, tempMax,
+    ).then(actions => actions);
+
+    PiInfo.findOneAndUpdate({ id }, { batteryEmerg: true })
+      .exec((err, data) => {
+        if (err) {
+          Console.log(err);
+        }
+        Console.log(`DISCONNECT ${data}`);
+      });
+  } else {
+    PiInfo.findOneAndUpdate({ id }, { batteryEmerg: false })
+      .exec((err, data) => {
+        if (err) {
+          Console.log(err);
+        }
+        Console.log(`NOT DISCONNECT ${data}`);
+      });
+  }
+
+  return response;
+};
+
+const formatingMsg = (actions) => {
+  const message = {};
+  message.action = actions;
+
+  return message;
+};
 
 // GET '/pisensor'
 // Just render test.ejs
@@ -104,45 +152,58 @@ router.post('/', async (req, res) => {
   // Console.log(req.body);
   const tempMin = 0;
   const tempMax = 30;
-  const message = { action: null };
+  let message = { action: null };
 
   const {
-    id, temperature, voltage, latitude, longitude, kpMax,
+    id, temperature, voltage, latitude, longitude, kpMax, date,
   } = req.body;
 
-  const batteryRemain = calcBatteryRemain(voltage);
+  const batteryRemain = await calcBatteryRemain(voltage);
   const objectDate = new Date(date);
-  const options = { upsert: true, new: true };
-
-  // 배터리 잔량을 이용하여 batteryEmerg 값을 갱신한다
-  if (batteryRemain <= 15) {
-    disconnectedSituation.disconnectedSituation(
-      id, latitude, longitude, tempMin, tempMax,
-    ).then((actions) => {
-      if (actions.length) {
-        message.action = actions;
-      }
-    });
-
-    PiEmerg.findOneAndUpdate({ id }, { batteryEmerg: true }, options)
-      .exec((err, data) => {
-        if (err) {
-          Console.log(err);
+  // const options = { upsert: true, new: true };
+  PiInfo.find({ id }).exec().then((data) => {
+    // If there's no records with input id
+    if (!data.length) {
+      PiInfo.create({
+        id, latitude, longitude, tempMin, tempMax, kpMax,
+      }, (error, d) => {
+        if (error) {
+          Console.error(error);
+        } else {
+          Console.log('Pi info Save okay');
+          Console.log(d);
         }
-        Console.log(data);
       });
-  } else {
-    PiEmerg.findOneAndUpdate({ id }, { batteryEmerg: false }, options)
-      .exec((err, data) => {
-        if (err) {
-          Console.log(err);
-        }
-        Console.log(data);
+    }
+  }).then(() => {
+    chkDisconnectedSituation(batteryRemain, id, latitude, longitude, tempMin, tempMax)
+      .then(actions => formatingMsg(actions))
+      .then((msg) => {
+        // make Message
+        message = msg;
+        res.send(message);
+        const stringMsg = JSON.stringify(msg);
+        PiMessage.create({ id, message: stringMsg }, (msgError, d) => {
+          if (msgError) {
+            Console.error(msgError);
+          } else {
+            Console.log('Pi Msg Save okay');
+            Console.log(d);
+          }
+        });
       });
-  }
+
+    // set tempMin, tempMax if it's extreme weather.
+    if (objectDate.getUTCHours() === 0) {
+      dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
+    }
+
+    const temp = PiSensor.findOne({ date: objectDate }).exec();
+    Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
+  });
 
   PiSensor.create({
-    id, temperature, batteryRemain, latitude, longitude, tempMin, tempMax, date: objectDate,
+    id, temperature, batteryRemain, date: objectDate,
   }, (err, data) => {
     if (err) {
       Console.error(err);
@@ -152,26 +213,12 @@ router.post('/', async (req, res) => {
     }
   });
 
-  // set tempMin, tempMax if it's extreme weather.
-  if (objectDate.getUTCHours() === 0) {
-    await dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
-  }
   // when data come, return action
-  const temp = await PiSensor.findOne({ date: objectDate }).exec();
-  await Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
+  // const temp = await PiSensor.findOne({ date: objectDate }).exec();
+  // await Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
   // message function으로 변환 필요
 
-  const stringMsg = JSON.stringify(message);
-  PiMessage.create({ id, message: stringMsg }, (err, data) => {
-    if (err) {
-      Console.error(err);
-    } else {
-      Console.log('Pi Msg Save okay');
-      Console.log(data);
-    }
-  });
-
-  return res.json(message);
+  return res.status(200);
 });
 
 router.get('/showmsg', (req, res) => {

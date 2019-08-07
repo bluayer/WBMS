@@ -34,8 +34,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Set routes
 app.use('/', require('./routes/home'));
 app.use('/pisensor', require('./routes/pisensor'));
-app.use('/piemerg', require('./routes/piemerg'));
-app.use('/api', require('./routes/api'));
+app.use('/piinfo', require('./routes/piinfo'));
 
 // App listening
 app.listen(port, () => {
