@@ -4,31 +4,19 @@ const cron = require('node-cron');
 
 const PiSensor = require('../models/PiSensor');
 const PiEmerg = require('../models/PiEmerg');
+const PiMessage = require('../models/PiMessage');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
-
+const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
 const disconnectedSituation = require('../public/javascript/disconnectedSituation');
+const piLocationFunc = require('../public/javascript/piLocationFunc');
 
 const Console = console;
 const router = express.Router();
-const piLocation = [['123423', 40.425869, -86.908066], ['123413', 40.416702, -86.875290]];
 
-
-const chkUniquePiId = (id) => {
-  for (let i = 0; i < piLocation.length; i += 1) {
-    if (piLocation[i][0] === id.toString()) {
-      return false; // Not unique
-    }
-  }
-  return true; // Unique
-};
-
-const getPiLocation = () => piLocation;
-
-const setPiLocation = (id, lat, lon) => {
-  const temp = [id.toString(), lat, lon];
-  piLocation.push(temp);
-};
+const loadPiLocations = () => piLocationFunc.getPiIds()
+  .then(piIds => piLocationFunc.getPiLocations(piIds))
+  .then(piLocations => piLocations);
 
 function findMaxValue(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
@@ -42,27 +30,37 @@ function findMaxValue(dailyKps, dailyKpMax) {
   });
 }
 
-
 // api를 통해서 하루의 kp 정보를 가져오고, kp-max를 찾아서 반환하는 함수
 async function kpLoad(dailyKps, dailyKpMax) {
   return new Promise((resolve) => {
     findMaxValue(dailyKps, dailyKpMax).then((Max) => {
-      Console.log(`Max value : ${Max}`);
+      // Console.log(`Max value : ${Max}`);
       resolve(Max);
     });
   });
 }
 
+const disconnectedSituationAction = async (sensor) => {
+  const {
+    id, latitude, longitude, tempMin, tempMax,
+  } = sensor;
+  const data = await disconnectedSituation.disconnectedSituation(
+    id, latitude, longitude, tempMin, tempMax,
+  );
+  // *** send Actions to raspberry pi ***
+  // await Console.log(typeof data);
+  // await Console.log(data);
+  return data;
+};
 
 // KP 비교 이후 discon sit 호출
 cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const dailyKps = await kpjson.data.breakdown;
   const dailyKpMax = -1;
-  await kpLoad(dailyKps, dailyKpMax).then(async (Max) => {
+  await kpLoad(dailyKps, dailyKpMax).then(async () => {
   // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
-  // 5일치 배터리 보호 plan을 세워서 보내줘야함
-    await Console.log(Max);
+  // 3일치 배터리 보호 plan을 세워서 보내줘야함
     await PiSensor.find({}).exec(async (err, sensors) => {
       if (err) {
         Console.log(err);
@@ -70,15 +68,15 @@ cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
       const waggleNum = sensors.length;
 
       let i = 0;
-      while (i < waggleNum) {
-        if (sensors[i].kpMax <= dailyKpMax) {
-          // await Console.log('disconnection!');
-          // await disconnectedSituation(sensors[i].id, sensors[i].latitude, sensors[i].longitude, sensors[i].tempMin, sensors[i].tempMax);
-          PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: true } });
+      while (i < waggleNum) { // num 미정
+        const { kpMax, id } = sensors[i];
+        if (kpMax <= dailyKpMax) {
+          disconnectedSituationAction(sensors[i]);
+
+          // If there's actions,
+          PiEmerg.update({ id }, { kpEmerg: true });
         } else {
-          // await Console.log(sensors[i].kpMax);
-          // await Console.log('disconnection!');
-          PiEmerg.update({ id: sensors[i].id }, { $set: { kpEmerg: false } });
+          PiEmerg.update({ id }, { kpEmerg: false });
         }
         i += 1;
       }
@@ -89,7 +87,7 @@ cron.schedule('0,10,20,30,40,50 * * * * *', async () => {
 
 // GET '/pisensor'
 // Just render test.ejs
-router.get('/sensor', (req, res) => {
+router.get('/', (req, res) => {
   PiSensor.find({}).exec((err, sensors) => {
     if (err) {
       Console.log(err);
@@ -102,62 +100,98 @@ router.get('/sensor', (req, res) => {
 
 // POST '/pisensor'
 // Save data at DB
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   // Console.log(req.body);
-
   const tempMin = 0;
-  const tempMax = 40;
+  const tempMax = 30;
+  const message = { action: null };
+
   const {
     id, temperature, voltage, latitude, longitude, kpMax,
   } = req.body;
 
   const batteryRemain = calcBatteryRemain(voltage);
-  const piSensor = new PiSensor();
-
-  piSensor.id = id;
-  piSensor.temperature = temperature;
-  piSensor.batteryRemain = batteryRemain;
-  piSensor.latitude = latitude;
-  piSensor.longitude = longitude;
-  piSensor.tempMin = tempMin;
-  piSensor.tempMax = tempMax;
-  piSensor.kpMax = kpMax;
-  // If you want to convert local server time, don't use toUTCString()
-  // piSensor.date = new Date(date).toUTCString();
-
+  const objectDate = new Date(date);
+  const options = { upsert: true, new: true };
 
   // 배터리 잔량을 이용하여 batteryEmerg 값을 갱신한다
   if (batteryRemain <= 15) {
-    disconnectedSituation.disconnectedSituation(id, latitude, longitude, tempMin, tempMax);
-    PiEmerg.update({ id }, { $set: { batteryEmerg: true } });
-    Console.log("battery Emerg!!!");
+    disconnectedSituation.disconnectedSituation(
+      id, latitude, longitude, tempMin, tempMax,
+    ).then((actions) => {
+      if (actions.length) {
+        message.action = actions;
+      }
+    });
+
+    PiEmerg.findOneAndUpdate({ id }, { batteryEmerg: true }, options)
+      .exec((err, data) => {
+        if (err) {
+          Console.log(err);
+        }
+        Console.log(data);
+      });
   } else {
-    PiEmerg.update({ id }, { $set: { batteryEmerg: false } });
-    Console.log("battery!!!");
+    PiEmerg.findOneAndUpdate({ id }, { batteryEmerg: false }, options)
+      .exec((err, data) => {
+        if (err) {
+          Console.log(err);
+        }
+        Console.log(data);
+      });
   }
 
-  piSensor.save((err) => {
+  PiSensor.create({
+    id, temperature, batteryRemain, latitude, longitude, tempMin, tempMax, date: objectDate,
+  }, (err, data) => {
     if (err) {
       Console.error(err);
     } else {
-      Console.log('Save okay');
-      if (chkUniquePiId(id) === true) {
-        setPiLocation(id, latitude, longitude);
-        Console.log('Set pi Location');
-      }
+      Console.log('Pi Sensor Save okay');
+      Console.log(data);
     }
   });
 
-  if (piSensor.date.getHours() === 0) {
-    dayPredictArgo.dayPredictArgo(id, latitude, longitude);
+  // set tempMin, tempMax if it's extreme weather.
+  if (objectDate.getUTCHours() === 0) {
+    await dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
   }
+  // when data come, return action
+  const temp = await PiSensor.findOne({ date: objectDate }).exec();
+  await Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
+  // message function으로 변환 필요
+
+  const stringMsg = JSON.stringify(message);
+  PiMessage.create({ id, message: stringMsg }, (err, data) => {
+    if (err) {
+      Console.error(err);
+    } else {
+      Console.log('Pi Msg Save okay');
+      Console.log(data);
+    }
+  });
+
+  return res.json(message);
+});
+
+router.get('/showmsg', (req, res) => {
+  PiMessage.find({}).exec((err, messages) => {
+    if (err) {
+      Console.log(err);
+      res.json(err);
+    }
+
+    res.render('message', { messages });
+  });
 });
 
 // GET '/pisensor/pilocation'
 // Just render test.ejs
 router.get('/pilocation', (req, res) => {
-  res.send(getPiLocation());
+  loadPiLocations().then((d) => {
+    Console.log(d);
+    res.send(d);
+  });
 });
-
 
 module.exports = router;
