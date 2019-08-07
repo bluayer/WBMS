@@ -176,27 +176,32 @@ router.post('/', async (req, res) => {
     )
       .then((actions) => {
         // set tempMin, tempMax if it's extreme weather.
-        if (objectDate.getUTCHours() === 0) {
+        if (objectDate.getHours() === 0) {
           dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
         }
         return actions;
       })
-      .then(async (forecastAction) => {
+      .then((forecastAction) => {
         const sense = PiInfo.findOne({ id }).exec();
         return sense.then((senseData) => {
           const premsg = { action: [] };
-          if (forecastAction !== null) {
-            premsg.action.push(management.manageTemperature(
-              temperature, senseData.tempMin, senseData.tempMax,
-            ));
-            forecastAction.forEach((action) => {
-              premsg.action.push(action);
-            });
-            return premsg;
-          }
-          premsg.action.push(management.manageTemperature(
+          const defaultAction = management.manageTemperature(
             temperature, senseData.tempMin, senseData.tempMax,
-          ));
+          );
+          defaultAction.delay = '0/0/0';
+          premsg.action.push(defaultAction);
+          if (forecastAction !== null) {
+            forecastAction.forEach((action) => {
+              const newAction = action;
+              const totalTime = Math.abs(objectDate - new Date(action.delay)) / 1000;
+              const hour = parseInt(totalTime / 3600, 10);
+              const min = parseInt((totalTime % 3600) / 60, 10);
+              const sec = parseInt(totalTime % 60, 10);
+              const newTime = `${hour}/${min}/${sec}`;
+              newAction.delay = newTime;
+              premsg.action.push(newAction);
+            });
+          }
           return premsg;
         });
       })
