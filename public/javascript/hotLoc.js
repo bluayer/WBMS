@@ -1,4 +1,3 @@
-const Console = console;
 const dayPredictArgo = require('./dayPredictArgo');
 
 const hotLoc = (tempMax, todayT, weather) => {

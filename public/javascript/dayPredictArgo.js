@@ -11,7 +11,7 @@ const packageTArr = [];
 const dayPredictArgo = async (id, latitude, longitude, day) => {
   const lat = latitude;
   const lon = longitude;
-  cosnt days = day*8;
+  const days = day * 8;
 
   const temp = await PiInfo.findOne({ id }).exec();
 
@@ -35,7 +35,7 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
   const todayT = [];
   let todayTMax = temperatureArr[0];
   let todayTMin = temperatureArr[0];
-  for (let i = (days-8); i < days; i += 1) {
+  for (let i = (days - 8); i < days; i += 1) {
     todayT[i] = temperatureArr[i];
     if (todayTMax < todayT[i]) {
       todayTMax = todayT[i];
@@ -56,11 +56,7 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
         tempMin: coldLoc.coldLoc(temp.tempMin, todayT),
       }, { new: true });
     }
-  } else { // 일교차가 큰 경우
-    // management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   }
-  // const dateAPI = await new Date(apiData[0].dt_txt);
-  // await Console.log(date);
 };
 
 const getPackageTArr = (id, latitude, longitude, day) => {

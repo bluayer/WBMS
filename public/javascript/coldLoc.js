@@ -1,4 +1,3 @@
-const Console = console;
 const dayPredictArgo = require('./dayPredictArgo');
 
 const coldLoc = (tempMin, todayT) => {
@@ -27,7 +26,6 @@ const coldLoc = (tempMin, todayT) => {
       coldTempMin = PackT[0];
     }
   }
-  Console.log(coldTempMin);
   return coldTempMin;
 };
 
