@@ -6,9 +6,10 @@ const coldLoc = require('./coldLoc');
 
 const Console = console;
 
-const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
+const dayPredictArgo = async (id, latitude, longitude, day) => {
   const lat = latitude;
   const lon = longitude;
+  const days = day * 8;
 
   const temp = await PiInfo.findOne({ id }).exec();
 
@@ -20,17 +21,20 @@ const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
   } catch (err) {
     await Console.error(err);
   }
-  // todayT is apiData.main.temp array
-  const todayT = [];
+  // temperatureArr is apiData.main.temp array
   const weather = [];
-  for (let i = 0; i < 8; i += 1) {
-    todayT[i] = (apiData[i].main.temp - 273).toFixed(3);
+  const temperatureArr = [];
+  for (let i = 0; i < apiData.length; i += 1) {
+    temperatureArr[i] = (apiData[i].main.temp - 273).toFixed(3);
     weather[i] = apiData[i].weather[0].main;
   }
+
   // 하루 최고, 최저 기온
-  let todayTMax = todayT[0];
-  let todayTMin = todayT[0];
-  for (let i = 1; i < 8; i += 1) {
+  const todayT = [];
+  let todayTMax = temperatureArr[0];
+  let todayTMin = temperatureArr[0];
+  for (let i = (days - 8); i < days; i += 1) {
+    todayT[i] = temperatureArr[i];
     if (todayTMax < todayT[i]) {
       todayTMax = todayT[i];
     }
@@ -38,12 +42,22 @@ const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
       todayTMin = todayT[i];
     }
   }
+  // 외부온도 기반으로 패키지 온도 예측 배열 생성
+  const PackT = [];
+  PackT[0] = todayT[0];
+  for (let i = 0; i < todayT.length; i += 1) {
+    const inclination = (todayT[i + 1] - todayT[i]).toFixed(3);
+    if (inclination > 0) { // 기울기가 양수
+      PackT[i + 1] = (parseFloat(PackT[i]) + (Math.abs(inclination) + 0.9)).toFixed(3);
+    } else if (inclination < 0) { // 기울기가 음수
+      PackT[i + 1] = (parseFloat(PackT[i]) - (Math.abs(inclination) + 0.3)).toFixed(3);
+    } else { // 기울기가 0
+      PackT[i + 1] = parseFloat(PackT[i]).toFixed;
+    }
+  }
   // 일교차로 먼저 분류
   if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
     if (todayTMax > 20) { // HOT strategy
-      Console.log('hot hot i"m so hot');
-      Console.log(temp.tempMax);
-      Console.log(hotLoc.hotLoc(temp.tempMax, todayT, weather));
       await PiInfo.findOneAndUpdate({ id }, {
         tempMax: hotLoc.hotLoc(temp.tempMax, todayT, weather),
       }, { new: true });
@@ -52,9 +66,8 @@ const dayPredictArgo = async (id, objectDate, latitude, longitude) => {
         tempMin: coldLoc.coldLoc(temp.tempMin, todayT),
       }, { new: true });
     }
-  } else { // 일교차가 큰 경우
-    // management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   }
+  return PackT;
   // const dateAPI = await new Date(apiData[0].dt_txt);
   // await Console.log(date);
 };
