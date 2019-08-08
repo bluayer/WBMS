@@ -6,11 +6,6 @@ const piSensorSchema = new Schema({
   id: Number,
   temperature: Number,
   batteryRemain: Number,
-  latitude: Number,
-  longitude: Number,
-  tempMin: Number,
-  tempMax: Number,
-  kpMax: Number,
   date: { type: Date, default: Date.now },
 });
 
