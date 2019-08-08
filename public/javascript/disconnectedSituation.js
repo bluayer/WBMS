@@ -15,7 +15,6 @@ const disconnectedSituation = async (id, latitude, longitude, tMin, tMax) => {
   try {
     const response = await axios.get(url);
     apiDataSet = await response.data.list;
-    await Console.log(apiDataSet);
     const len = apiDataSet.length;
     // Console.log(apiDataSet);
     // 3시간 간격으로 5일치 temparature 정보를 가져와서 fiveDayData배열에 담는다.

@@ -153,6 +153,8 @@ router.post('/', async (req, res) => {
 
   const batteryRemain = await calcBatteryRemain(voltage);
   const objectDate = new Date(date);
+  const newDate = new Date(`${objectDate.getUTCFullYear()}-${objectDate.getUTCMonth() + 1}-${objectDate.getUTCDate()} ${objectDate.getUTCHours()}:${objectDate.getUTCMinutes()}:${objectDate.getUTCSeconds()}`);
+  Console.log(objectDate);
   // const options = { upsert: true, new: true };
   PiInfo.find({ id }).exec().then((data) => {
     // If there's no records with input id
@@ -193,7 +195,7 @@ router.post('/', async (req, res) => {
           if (forecastAction !== null) {
             forecastAction.forEach((action) => {
               const newAction = action;
-              const totalTime = Math.abs(objectDate - new Date(action.delay)) / 1000;
+              const totalTime = Math.abs(newDate - new Date(action.delay)) / 1000;
               const hour = parseInt(totalTime / 3600, 10);
               const min = parseInt((totalTime % 3600) / 60, 10);
               const sec = parseInt(totalTime % 60, 10);
