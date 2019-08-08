@@ -30,7 +30,6 @@ function kpLoad(dailyKps) {
   });
 }
 
-
 const disconnectedSituationAction = async (sensor) => {
   const {
     id, latitude, longitude, tempMin, tempMax,
@@ -49,8 +48,9 @@ const kpEmergency = async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const dailyKps = await kpjson.data.breakdown;
   await kpLoad(dailyKps).then(async (dailyKpMax) => {
-  // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
-  // 3일치 배터리 보호 plan을 세워서 보내줘야함
+    // Console.log(dailyKpMax);
+    // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
+    // 3일치 배터리 보호 plan을 세워서 보내줘야함
     const options = { upsert: true, new: true };
     await PiSensor.find({}).exec(async (err, sensors) => {
       if (err) {
@@ -113,13 +113,6 @@ const chkDisconnectedSituation = async (
   return response;
 };
 
-const formatingMsg = (actions) => {
-  const message = {};
-  message.action = actions;
-
-  return message;
-};
-
 // GET '/pisensor'
 // Just render test.ejs
 router.get('/', (req, res) => {
@@ -139,7 +132,6 @@ router.post('/', async (req, res) => {
   // Console.log(req.body);
   const tempMin = 0;
   const tempMax = 30;
-  let message = { action: null };
 
   const {
     id, temperature, voltage, latitude, longitude, kpMax, date,
@@ -147,6 +139,8 @@ router.post('/', async (req, res) => {
 
   const batteryRemain = await calcBatteryRemain(voltage);
   const objectDate = new Date(date);
+  const newDate = new Date(`${objectDate.getUTCFullYear()}-${objectDate.getUTCMonth() + 1}-${objectDate.getUTCDate()} ${objectDate.getUTCHours()}:${objectDate.getUTCMinutes()}:${objectDate.getUTCSeconds()}`);
+  Console.log(objectDate);
   // const options = { upsert: true, new: true };
   PiInfo.find({ id }).exec().then((data) => {
     // If there's no records with input id
@@ -163,12 +157,45 @@ router.post('/', async (req, res) => {
       });
     }
   }).then(() => {
-    chkDisconnectedSituation(batteryRemain, id, latitude, longitude, tempMin, tempMax)
-      .then(actions => formatingMsg(actions))
+    // check it is disconnected Situation
+    // Reason : batteryRemain < 15
+    chkDisconnectedSituation(
+      batteryRemain, id, latitude, longitude, tempMin, tempMax,
+    )
+      .then((actions) => {
+        // set tempMin, tempMax if it's extreme weather.
+        if (objectDate.getHours() === 0) {
+          dayPredictArgo.dayPredictArgo(id, latitude, longitude, 1);
+        }
+        return actions;
+      })
+      .then((forecastAction) => {
+        const sense = PiInfo.findOne({ id }).exec();
+        return sense.then((senseData) => {
+          const premsg = { action: [] };
+          const defaultAction = management.manageTemperature(
+            temperature, senseData.tempMin, senseData.tempMax,
+          );
+          defaultAction.delay = '0/0/0';
+          premsg.action.push(defaultAction);
+          if (forecastAction !== null) {
+            forecastAction.forEach((action) => {
+              const newAction = action;
+              const totalTime = Math.abs(newDate - new Date(action.delay)) / 1000;
+              const hour = parseInt(totalTime / 3600, 10);
+              const min = parseInt((totalTime % 3600) / 60, 10);
+              const sec = parseInt(totalTime % 60, 10);
+              const newTime = `${hour}/${min}/${sec}`;
+              newAction.delay = newTime;
+              premsg.action.push(newAction);
+            });
+          }
+          return premsg;
+        });
+      })
       .then((msg) => {
+        res.send(msg);
         // make Message
-        message = msg;
-        res.send(message);
         const stringMsg = JSON.stringify(msg);
         PiMessage.create({ id, message: stringMsg }, (msgError, d) => {
           if (msgError) {
@@ -178,20 +205,13 @@ router.post('/', async (req, res) => {
             Console.log(d);
           }
         });
+        return msg;
       });
-
-    // set tempMin, tempMax if it's extreme weather.
-    if (objectDate.getUTCHours() === 0) {
-      dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude, 1);
-    }
 
     // 00시 ~ 01시 15분 간에 도착하는 post 에 대해서 kp emergy function 실행
     if (objectDate.getUTCMinutes() > 00 && objectDate.getUTCMinutes() < 15 && objectDate.getUTCHours() === 0) {
       kpEmergency();
     }
-
-    const temp = PiSensor.findOne({ date: objectDate }).exec();
-    Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
   });
 
   PiSensor.create({
@@ -204,11 +224,6 @@ router.post('/', async (req, res) => {
       Console.log(data);
     }
   });
-
-  // when data come, return action
-  // const temp = await PiSensor.findOne({ date: objectDate }).exec();
-  // await Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
-  // message function으로 변환 필요
 
   return res.status(200);
 });
