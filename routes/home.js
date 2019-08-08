@@ -1,7 +1,7 @@
 const express = require('express');
 
 const PiSensor = require('../models/PiSensor');
-const PiEmerg = require('../models/PiEmerg');
+const PiInfo = require('../models/PiInfo');
 
 const router = express.Router();
 const Console = console;
@@ -10,7 +10,7 @@ const Console = console;
 // Render index.ejs
 router.get('/', (req, res) => {
   // emergency 체크
-  PiEmerg.find({}).exec((err, emergs) => {
+  PiInfo.find({}).exec((err, emergs) => {
     if (err) {
       Console.log(err);
       res.json(err);

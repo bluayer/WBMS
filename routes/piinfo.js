@@ -31,9 +31,6 @@ router.post('/', (req, res) => {
   return res.status(200);
 });
 
-
-<<<<<<< HEAD:routes/piemerg.js
-=======
 router.get('/emerg', (req, res) => {
   PiInfo.find({}).exec((err, emergs) => {
     if (err) {
@@ -45,6 +42,4 @@ router.get('/emerg', (req, res) => {
   });
 });
 
-
->>>>>>> develop:routes/piinfo.js
 module.exports = router;

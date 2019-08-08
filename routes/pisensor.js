@@ -191,7 +191,6 @@ router.post('/', async (req, res) => {
     const temp = PiSensor.findOne({ date: objectDate }).exec();
     Console.log('data: ', management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
   });
->>>>>>> develop
 
   PiSensor.create({
     id, temperature, batteryRemain, date: objectDate,
