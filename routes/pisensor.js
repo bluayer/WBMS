@@ -196,11 +196,11 @@ router.post('/', async (req, res) => {
 
     // set tempMin, tempMax if it's extreme weather.
     if (objectDate.getUTCHours() === 0) {
-      dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude, 1);
+      dayPredictArgo.dayPredictArgo(id, latitude, longitude, 1);
     }
 
     const temp = PiSensor.findOne({ date: objectDate }).exec();
-    Console.log(management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
+    Console.log('data: ', management.manageTemperature(temperature, temp.tempMin, temp.tempMax));
   });
 
   PiSensor.create({

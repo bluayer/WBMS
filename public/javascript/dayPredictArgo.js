@@ -6,12 +6,10 @@ const coldLoc = require('./coldLoc');
 
 const Console = console;
 
-const packageTArr = [];
-
 const dayPredictArgo = async (id, latitude, longitude, day) => {
   const lat = latitude;
   const lon = longitude;
-  cosnt days = day*8;
+  const days = day * 8;
 
   const temp = await PiInfo.findOne({ id }).exec();
 
@@ -35,7 +33,7 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
   const todayT = [];
   let todayTMax = temperatureArr[0];
   let todayTMin = temperatureArr[0];
-  for (let i = (days-8); i < days; i += 1) {
+  for (let i = (days - 8); i < days; i += 1) {
     todayT[i] = temperatureArr[i];
     if (todayTMax < todayT[i]) {
       todayTMax = todayT[i];
@@ -44,7 +42,19 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
       todayTMin = todayT[i];
     }
   }
-
+  // 외부온도 기반으로 패키지 온도 예측 배열 생성
+  const PackT = [];
+  PackT[0] = todayT[0];
+  for (let i = 0; i < todayT.length; i += 1) {
+    const inclination = (todayT[i + 1] - todayT[i]).toFixed(3);
+    if (inclination > 0) { // 기울기가 양수
+      PackT[i + 1] = (parseFloat(PackT[i]) + (Math.abs(inclination) + 0.9)).toFixed(3);
+    } else if (inclination < 0) { // 기울기가 음수
+      PackT[i + 1] = (parseFloat(PackT[i]) - (Math.abs(inclination) + 0.3)).toFixed(3);
+    } else { // 기울기가 0
+      PackT[i + 1] = parseFloat(PackT[i]).toFixed;
+    }
+  }
   // 일교차로 먼저 분류
   if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
     if (todayTMax > 20) { // HOT strategy
@@ -56,18 +66,10 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
         tempMin: coldLoc.coldLoc(temp.tempMin, todayT),
       }, { new: true });
     }
-  } else { // 일교차가 큰 경우
-    // management.manageTemperature(temp.temperature, temp.tempMax, temp.tempMin);
   }
+  return PackT;
   // const dateAPI = await new Date(apiData[0].dt_txt);
   // await Console.log(date);
 };
 
-const getPackageTArr = (id, latitude, longitude, day) => {
-  dayPredictArgo(id, latitude, longitude, day);
-  return packageTArr;
-};
-const setPackageTArr = (packT) => {
-  packageTArr.push(packT);
-};
-module.exports = { dayPredictArgo, getPackageTArr, setPackageTArr };
+module.exports = { dayPredictArgo };
