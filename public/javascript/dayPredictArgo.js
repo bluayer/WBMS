@@ -8,24 +8,21 @@ const Console = console;
 
 const createPackT = (todayT, positiveI, negativeI) => {
   // 외부온도 기반으로 패키지 온도 예측 배열 생성
-  const PackT = [];
+  const packT = [];
   const firstTodayT = Number(todayT[0]);
-  PackT[0] = firstTodayT;
+  packT[0] = firstTodayT;
   for (let i = 0; i < todayT.length - 1; i += 1) {
     const inclination = Number((todayT[i + 1] - todayT[i]).toFixed(3));
     if (inclination > 0) { // 기울기가 양수
-      PackT[i + 1] = Number((PackT[i] + (Math.abs(inclination) + positiveI)).toFixed(3));
+      packT[i + 1] = Number((packT[i] + (Math.abs(inclination) + positiveI)).toFixed(3));
     } else if (inclination < 0) { // 기울기가 음수
-      PackT[i + 1] = Number((PackT[i] - (Math.abs(inclination) + negativeI)).toFixed(3));
+      packT[i + 1] = Number((packT[i] - (Math.abs(inclination) + negativeI)).toFixed(3));
     } else { // 기울기가 0
-      PackT[i + 1] = Number(PackT[i]);
+      packT[i + 1] = Number(packT[i]);
     }
   }
-  Console.log(PackT);
-  Console.log('packT.length : ', PackT.length);
-  return PackT;
+  return packT;
 };
-
 
 const dayPredictArgo = async (id, latitude, longitude, day) => {
   const lat = latitude;
@@ -47,9 +44,11 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
   // temperatureArr is apiData.main.temp array
   const weather = [];
   const temperatureArr = [];
+  const dateArr = [];
   for (let i = 0; i < apiData.length; i += 1) {
     temperatureArr[i] = Number((apiData[i].main.temp - 273).toFixed(3));
     weather[i] = apiData[i].weather[0].main;
+    dateArr[i] = apiData[i].dt_txt;
   }
   // 하루 최고, 최저 기온
   const todayT = [];
@@ -77,6 +76,10 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
         tempMin: coldLoc.coldLoc(temp.tempMin, createPackT(todayT, 0.03, 0.08)),
       }, { new: true });
     }
+  }
+  // packT+date Array
+  for (let i = 0; i < 8; i += 1) {
+    daysPackT[0][i] += (`/${dateArr[days + i]}`);
   }
   return daysPackT;
   // const dateAPI = await new Date(apiData[0].dt_txt);

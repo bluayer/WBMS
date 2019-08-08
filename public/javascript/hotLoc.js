@@ -1,6 +1,4 @@
-const Console = console;
-
-const hotLoc = (tempMax, PackT, weather) => {
+const hotLoc = (tempMax, packT, weather) => {
   // if it will rain, return default tempMax
   for (let i = 0; i < 8; i += 1) {
     if (weather[i] === 'Rain') {
@@ -9,11 +7,11 @@ const hotLoc = (tempMax, PackT, weather) => {
   }
   // set tempMax
   let hotTempMax = tempMax;
-  let inclinationMax = (PackT[1] - PackT[0]).toFixed(3);
+  let inclinationMax = (packT[1] - packT[0]).toFixed(3);
   for (let i = 1; i < 7; i += 1) {
-    if (inclinationMax < (PackT[i + 1] - PackT[i]).toFixed(3)) {
-      inclinationMax = (PackT[i + 1] - PackT[i]).toFixed(3);
-      hotTempMax = PackT[i];
+    if (inclinationMax < (packT[i + 1] - packT[i]).toFixed(3)) {
+      inclinationMax = (packT[i + 1] - packT[i]).toFixed(3);
+      hotTempMax = packT[i];
     }
   }
   return hotTempMax;

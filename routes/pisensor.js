@@ -168,7 +168,7 @@ router.post('/', async (req, res) => {
       .then((actions) => {
         // set tempMin, tempMax if it's extreme weather.
         if (objectDate.getHours() === 0) {
-          dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude);
+          dayPredictArgo.dayPredictArgo(id, latitude, longitude, 1);
         }
         return actions;
       })
