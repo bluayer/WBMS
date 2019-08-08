@@ -185,8 +185,8 @@ router.post('/', async (req, res) => {
       dayPredictArgo.dayPredictArgo(id, objectDate, latitude, longitude, 1);
     }
 
-    // 00시 ~ 01시 15분 간에 도착하는 post 에 대해서 ㅇ
-    if (objectDate.getUTCMinutes() > 28 && objectDate.getUTCMinutes() < 35 && objectDate.getUTCHours() === 0) {
+    // 00시 ~ 01시 15분 간에 도착하는 post 에 대해서 kp emergy function 실행
+    if (objectDate.getUTCMinutes() > 00 && objectDate.getUTCMinutes() < 15 && objectDate.getUTCHours() === 0) {
       kpEmergency();
     }
 
