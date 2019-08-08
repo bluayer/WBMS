@@ -77,6 +77,7 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
       }, { new: true });
     }
   }
+
   // packT+date Array
   for (let i = 0; i < 8; i += 1) {
     daysPackT[0][i] += (`/${dateArr[days + i]}`);

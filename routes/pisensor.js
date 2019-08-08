@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cron = require('node-cron');
-// const schedule = require('node-schedule');
+
 const PiSensor = require('../models/PiSensor');
 const PiInfo = require('../models/PiInfo');
 const PiMessage = require('../models/PiMessage');
@@ -44,7 +44,7 @@ const disconnectedSituationAction = async (sensor) => {
 };
 
 // KP 비교 이후 discon sit 호출
-cron.schedule('15,30,45,00 * * * * *', async () => {
+const kpEmergency = async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const dailyKps = await kpjson.data.breakdown;
   await kpLoad(dailyKps).then(async (dailyKpMax) => {
@@ -63,29 +63,26 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
         const { kpMax, id } = sensors[i];
         if (kpMax <= dailyKpMax) {
           disconnectedSituationAction(sensors[i]);
-
           // If there's actions,
           PiInfo.findOneAndUpdate({ id }, { kpEmerg: true }, options)
-            .exec((queryErr, data) => {
+            .exec((queryErr) => {
               if (err) {
                 Console.log(queryErr);
               }
-              // Console.log(data);
             });
         } else {
           PiInfo.findOneAndUpdate({ id }, { kpEmerg: false }, options)
-            .exec((queryErr, data) => {
+            .exec((queryErr) => {
               if (err) {
                 Console.log(queryErr);
               }
-              // Console.log(data);
             });
         }
         i += 1;
       }
     });
   });
-});
+};
 
 const chkDisconnectedSituation = async (
   batteryRemain, id, latitude, longitude, tempMin, tempMax,
@@ -210,6 +207,11 @@ router.post('/', async (req, res) => {
         });
         return msg;
       });
+
+    // 00시 ~ 01시 15분 간에 도착하는 post 에 대해서 kp emergy function 실행
+    if (objectDate.getUTCMinutes() > 00 && objectDate.getUTCMinutes() < 15 && objectDate.getUTCHours() === 0) {
+      kpEmergency();
+    }
   });
 
   PiSensor.create({
