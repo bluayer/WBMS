@@ -44,7 +44,8 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
   }
   // 외부온도 기반으로 패키지 온도 예측 배열 생성
   const PackT = [];
-  PackT[0] = todayT[0];
+  const firstTodayT = todayT[0];
+  PackT[0] = firstTodayT;
   for (let i = 0; i < todayT.length; i += 1) {
     const inclination = (todayT[i + 1] - todayT[i]).toFixed(3);
     if (inclination > 0) { // 기울기가 양수

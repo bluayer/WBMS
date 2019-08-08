@@ -13,6 +13,7 @@ require('dotenv').config();
 // Set DB
 mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGO, { useNewUrlParser: true });
+mongoose.set('useFindAndModify', false);
 const db = mongoose.connection;
 db.once('open', () => {
   Console.log('DB connected');

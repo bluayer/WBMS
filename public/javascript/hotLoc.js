@@ -1,5 +1,4 @@
 const Console = console;
-const dayPredict = require('./dayPredictArgo');
 
 const hotLoc = (tempMax, todayT, weather) => {
   // if it will rain, return default tempMax
@@ -10,7 +9,8 @@ const hotLoc = (tempMax, todayT, weather) => {
   }
   // 외부온도 기반으로 패키지 온도 예측 배열 생성
   const PackT = [];
-  PackT[0] = todayT[0];
+  const firstTodayT = todayT[0];
+  PackT[0] = firstTodayT;
   for (let i = 0; i < todayT.length; i += 1) {
     const inclination = (todayT[i + 1] - todayT[i]).toFixed(3);
     if (inclination > 0) { // 기울기가 양수
