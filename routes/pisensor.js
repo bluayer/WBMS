@@ -48,7 +48,7 @@ cron.schedule('15,30,45,00 * * * * *', async () => {
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const dailyKps = await kpjson.data.breakdown;
   await kpLoad(dailyKps).then(async (dailyKpMax) => {
-    Console.log(dailyKpMax);
+    // Console.log(dailyKpMax);
     // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
     // 3일치 배터리 보호 plan을 세워서 보내줘야함
     const options = { upsert: true, new: true };
