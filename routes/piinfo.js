@@ -31,7 +31,6 @@ router.post('/', (req, res) => {
   return res.status(200);
 });
 
-
 router.get('/emerg', (req, res) => {
   PiInfo.find({}).exec((err, emergs) => {
     if (err) {
@@ -42,6 +41,5 @@ router.get('/emerg', (req, res) => {
     res.render('emerg', { emergs });
   });
 });
-
 
 module.exports = router;
