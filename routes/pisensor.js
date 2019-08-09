@@ -1,6 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-const cron = require('node-cron');
 
 const PiSensor = require('../models/PiSensor');
 const PiInfo = require('../models/PiInfo');
@@ -30,67 +29,59 @@ function kpLoad(dailyKps) {
   });
 }
 
-const disconnectedSituationAction = async (sensor) => {
-  const {
-    id, latitude, longitude, tempMin, tempMax,
-  } = sensor;
-  const data = await disconnectedSituation.disconnectedSituation(
-    id, latitude, longitude, tempMin, tempMax,
-  );
-  // *** send Actions to raspberry pi ***
-  // await Console.log(typeof data);
-  // await Console.log(data);
-  return data;
-};
-
 // KP 비교 이후 discon sit 호출
-const kpEmergency = async () => {
+const kpEmergency = async (id) => {
+  let response = null;
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const dailyKps = await kpjson.data.breakdown;
-  await kpLoad(dailyKps).then(async (dailyKpMax) => {
-    // Console.log(dailyKpMax);
-    // 만약 waggle sensor가 견딜 수 있는 kp 지수가 kp-max보다 낮다면
-    // 3일치 배터리 보호 plan을 세워서 보내줘야함
+  response = await kpLoad(dailyKps).then(async (dailyKpMax) => {
     const options = { upsert: true, new: true };
-    await PiSensor.find({}).exec(async (err, sensors) => {
+    let res = null;
+    res = await PiInfo.find({ id }).exec(async (err, sensor) => {
+      let emerg = null;
       if (err) {
         Console.log(err);
       }
-      const waggleNum = sensors.length;
+      Console.log(sensor);
+      Console.log('kpmax is ', sensor[0].kpMax, ' dailyKpMax is', dailyKpMax);
+      if (sensor[0].kpMax <= dailyKpMax) {
+        Console.log('welcom kp');
+        emerg = await disconnectedSituation.disconnectedSituation(
+          sensor[0].id, sensor[0].latitude, sensor[0].longitude,
+        ).then((actions) => {
+          Console.log('kp emegency!!! :', actions);
+          return actions;
+        });
 
-      let i = 0;
-      while (i < waggleNum) { // num 미정
-        const { kpMax, id } = sensors[i];
-        if (kpMax <= dailyKpMax) {
-          disconnectedSituationAction(sensors[i]);
-          // If there's actions,
-          PiInfo.findOneAndUpdate({ id }, { kpEmerg: true }, options)
-            .exec((queryErr) => {
-              if (err) {
-                Console.log(queryErr);
-              }
-            });
-        } else {
-          PiInfo.findOneAndUpdate({ id }, { kpEmerg: false }, options)
-            .exec((queryErr) => {
-              if (err) {
-                Console.log(queryErr);
-              }
-            });
-        }
-        i += 1;
+        // dailyKpMax를 통해 actions 저장
+        PiInfo.findOneAndUpdate({ id }, { kpEmerg: true }, options)
+          .exec((queryErr) => {
+            if (err) {
+              Console.log(queryErr);
+            }
+          });
+      } else {
+        PiInfo.findOneAndUpdate({ id }, { kpEmerg: false }, options)
+          .exec((queryErr) => {
+            if (err) {
+              Console.log(queryErr);
+            }
+          });
       }
+      return emerg;
     });
+    return res;
   });
+  return response;
 };
 
-const chkDisconnectedSituation = async (
-  batteryRemain, id, latitude, longitude, tempMin, tempMax,
+const checkBatteryRemain = async (
+  batteryRemain, id, latitude, longitude,
 ) => {
   let response = null;
   if (batteryRemain <= 15) {
     response = await disconnectedSituation.disconnectedSituation(
-      id, latitude, longitude, tempMin, tempMax,
+      id, latitude, longitude,
     ).then(actions => actions);
 
     PiInfo.findOneAndUpdate({ id }, { batteryEmerg: true })
@@ -159,17 +150,27 @@ router.post('/', async (req, res) => {
   }).then(() => {
     // check it is disconnected Situation
     // Reason : batteryRemain < 15
-    chkDisconnectedSituation(
-      batteryRemain, id, latitude, longitude, tempMin, tempMax,
+    checkBatteryRemain(
+      batteryRemain, id, latitude, longitude,
     )
-      .then((actions) => {
+      .then(async (actions) => {
         // set tempMin, tempMax if it's extreme weather.
-        if (objectDate.getHours() === 0) {
+        if (objectDate.getHours() === 0 && objectDate.getMinutes() >= 0 && objectDate.getMinutes() < 15) {
           dayPredictArgo.dayPredictArgo(id, latitude, longitude, 1);
+          const emerg = kpEmergency(id).then((d) => {
+            Console.log('d is', d);
+            return d;
+          });
+          Console.log('gogo');
+          if (actions === null) {
+            Console.log('emegererere ', emerg);
+            return emerg;
+          }
         }
         return actions;
       })
       .then((forecastAction) => {
+        Console.log('forecastAction is ', forecastAction);
         const sense = PiInfo.findOne({ id }).exec();
         return sense.then((senseData) => {
           const premsg = { action: [] };
@@ -207,11 +208,6 @@ router.post('/', async (req, res) => {
         });
         return msg;
       });
-
-    // 00시 ~ 01시 15분 간에 도착하는 post 에 대해서 kp emergy function 실행
-    if (objectDate.getUTCMinutes() > 00 && objectDate.getUTCMinutes() < 15 && objectDate.getUTCHours() === 0) {
-      kpEmergency();
-    }
   });
 
   PiSensor.create({

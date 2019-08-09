@@ -38,6 +38,7 @@ const getFiveDayAction = (id, latitude, longitude) => {
 
   return Promise.all(content);
 };
+
 const disconnectedSituation = async (id, latitude, longitude) => {
   return getFiveDayAction(id, latitude, longitude).then((content) => {
     const data = [];
