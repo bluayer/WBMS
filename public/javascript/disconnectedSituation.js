@@ -16,6 +16,8 @@ const getOneDayAction = (id, latitude, longitude, k) => {
           const data = management.manageTemperature(
             temperature, packageData[0].tempMin, packageData[0].tempMax,
           );
+          // disconnected situation이면 무조건 충전
+          data.charge = true;
           data.delay = date;
           res.push(data);
         }

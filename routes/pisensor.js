@@ -3,7 +3,7 @@ const axios = require('axios');
 
 const PiSensor = require('../models/PiSensor');
 const PiInfo = require('../models/PiInfo');
-const PiMessage = require('../models/PiMessage');
+const PiAction = require('../models/PiAction');
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
 const management = require('../public/javascript/management');
 const dayPredictArgo = require('../public/javascript/dayPredictArgo');
@@ -31,7 +31,7 @@ function kpLoad(dailyKps) {
 
 const findPi = id => PiInfo.find({ id }).exec().then(d => d[0]);
 
-const chkKPAndUpdate = async (id, sensor, dailyKpMax) => {
+const chkKpAndUpdate = async (id, sensor, dailyKpMax) => {
   let emerg = null;
   const options = { upsert: true, new: true };
   if (sensor.kpMax <= dailyKpMax) {
@@ -61,7 +61,7 @@ const kpEmergency = async (id) => {
   const dailyKps = await kpjson.data.breakdown;
   const dailyKpMax = await kpLoad(dailyKps);
   const sensor = await findPi(id);
-  const response = await chkKPAndUpdate(id, sensor, dailyKpMax).then(emerg => emerg);
+  const response = await chkKpAndUpdate(id, sensor, dailyKpMax).then(emerg => emerg);
   return response;
 };
 
@@ -71,7 +71,7 @@ const checkBatteryRemain = async (
   let response = null;
   if (batteryRemain <= 15) {
     response = await disconnectedSituation.disconnectedSituation(
-      id, latitude, longitude,
+      id, latitude, longitude, batteryRemain,
     ).then(actions => actions);
 
     PiInfo.findOneAndUpdate({ id }, { batteryEmerg: true })
@@ -111,8 +111,8 @@ router.get('/', (req, res) => {
 // Save data at DB
 router.post('/', async (req, res) => {
   // Console.log(req.body);
-  const tempMin = 0;
-  const tempMax = 30;
+  const tempMin = 5;
+  const tempMax = 35;
 
   const {
     id, temperature, voltage, latitude, longitude, kpMax, date,
@@ -160,8 +160,8 @@ router.post('/', async (req, res) => {
         const sense = PiInfo.findOne({ id }).exec();
         return sense.then((senseData) => {
           const premsg = { action: [] };
-          const defaultAction = management.manageTemperature(
-            temperature, senseData.tempMin, senseData.tempMax,
+          const defaultAction = management.makeMessage(
+            temperature, senseData.tempMin, senseData.tempMax, batteryRemain,
           );
           defaultAction.delay = '0/0/0';
           premsg.action.push(defaultAction);
@@ -184,7 +184,7 @@ router.post('/', async (req, res) => {
         res.send(msg);
         // make Message
         const stringMsg = JSON.stringify(msg);
-        PiMessage.create({ id, message: stringMsg }, (msgError, d) => {
+        PiAction.create({ id, action: stringMsg }, (msgError, d) => {
           if (msgError) {
             Console.error(msgError);
           } else {
@@ -211,7 +211,7 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/showmsg', (req, res) => {
-  PiMessage.find({}).exec((err, messages) => {
+  PiAction.find({}).exec((err, messages) => {
     if (err) {
       Console.log(err);
       res.json(err);

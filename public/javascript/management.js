@@ -18,9 +18,9 @@ const manageBatteryRemain = (batteryRemain) => {
   // True : Do charge
   // False : Not charge
   const data = { charge: true };
-  // If BatteryRemain > 95, it can be overcharged.
+  // If BatteryRemain > 90, it can be overcharged.
   // So stop charge.
-  if (batteryRemain > 95) {
+  if (batteryRemain > 90) {
     data.charge = false;
   }
 
