@@ -1,24 +1,12 @@
+// Node modules
 const express = require('express');
 
+// Database
 const PiSensor = require('../models/PiSensor');
 const PiInfo = require('../models/PiInfo');
 
 const router = express.Router();
 const Console = console;
-
-// GET '/'
-// Render index.ejs
-router.get('/', (req, res) => {
-  // emergency 체크
-  PiInfo.find({}).exec((err, emergs) => {
-    if (err) {
-      Console.log(err);
-      res.json(err);
-    }
-
-    res.render('main', { emergs });
-  });
-});
 
 const pushData = (len, data) => {
   const batteryRemains = [];
@@ -40,6 +28,20 @@ const pushData = (len, data) => {
   result.dates = dates;
   return result;
 };
+
+// GET '/'
+// Render index.ejs
+router.get('/', (req, res) => {
+  // emergency 체크
+  PiInfo.find({}).exec((err, emergs) => {
+    if (err) {
+      Console.log(err);
+      res.json(err);
+    }
+
+    res.render('main', { emergs });
+  });
+});
 
 router.get('/statistic/:id', (req, res) => {
   const { id } = req.params;

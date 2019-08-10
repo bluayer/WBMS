@@ -1,5 +1,7 @@
+// Node modules
 const express = require('express');
-// const schedule = require('node-schedule');
+
+// Database
 const PiInfo = require('../models/PiInfo');
 
 const Console = console;

@@ -2,8 +2,6 @@ const dayPredictArgo = require('./dayPredictArgo');
 const management = require('./management');
 const PiInfo = require('../../models/PiInfo');
 
-const Console = console;
-
 const getOneDayAction = (id, latitude, longitude, k) => {
   const oneDayAction = dayPredictArgo.dayPredictArgo(id, latitude, longitude, k)
     .then((packageTemp) => {
