@@ -29,49 +29,39 @@ function kpLoad(dailyKps) {
   });
 }
 
+const findPi = id => PiInfo.find({ id }).exec().then(d => d[0]);
+
+const chkKPAndUpdate = async (id, sensor, dailyKpMax) => {
+  let emerg = null;
+  const options = { upsert: true, new: true };
+  if (sensor.kpMax <= dailyKpMax) {
+    emerg = await disconnectedSituation.disconnectedSituation(
+      sensor.id, sensor.latitude, sensor.longitude,
+    ).then(actions => actions);
+    PiInfo.findOneAndUpdate({ id }, { kpEmerg: true }, options)
+      .exec((queryErr) => {
+        if (queryErr) {
+          Console.log(queryErr);
+        }
+      });
+  } else {
+    PiInfo.findOneAndUpdate({ id }, { kpEmerg: false }, options)
+      .exec((queryErr) => {
+        if (queryErr) {
+          Console.log(queryErr);
+        }
+      });
+  }
+  return emerg;
+};
+
 // KP 비교 이후 discon sit 호출
 const kpEmergency = async (id) => {
-  let response = null;
   const kpjson = await axios.get('https://fya10l15m8.execute-api.us-east-1.amazonaws.com/Stage');
   const dailyKps = await kpjson.data.breakdown;
-  response = await kpLoad(dailyKps).then(async (dailyKpMax) => {
-    const options = { upsert: true, new: true };
-    let res = null;
-    res = await PiInfo.find({ id }).exec(async (err, sensor) => {
-      let emerg = null;
-      if (err) {
-        Console.log(err);
-      }
-      Console.log(sensor);
-      Console.log('kpmax is ', sensor[0].kpMax, ' dailyKpMax is', dailyKpMax);
-      if (sensor[0].kpMax <= dailyKpMax) {
-        Console.log('welcom kp');
-        emerg = await disconnectedSituation.disconnectedSituation(
-          sensor[0].id, sensor[0].latitude, sensor[0].longitude,
-        ).then((actions) => {
-          Console.log('kp emegency!!! :', actions);
-          return actions;
-        });
-
-        // dailyKpMax를 통해 actions 저장
-        PiInfo.findOneAndUpdate({ id }, { kpEmerg: true }, options)
-          .exec((queryErr) => {
-            if (err) {
-              Console.log(queryErr);
-            }
-          });
-      } else {
-        PiInfo.findOneAndUpdate({ id }, { kpEmerg: false }, options)
-          .exec((queryErr) => {
-            if (err) {
-              Console.log(queryErr);
-            }
-          });
-      }
-      return emerg;
-    });
-    return res;
-  });
+  const dailyKpMax = await kpLoad(dailyKps);
+  const sensor = await findPi(id);
+  const response = await chkKPAndUpdate(id, sensor, dailyKpMax).then(emerg => emerg);
   return response;
 };
 
@@ -155,22 +145,18 @@ router.post('/', async (req, res) => {
     )
       .then(async (actions) => {
         // set tempMin, tempMax if it's extreme weather.
-        if (objectDate.getHours() === 0 && objectDate.getMinutes() >= 0 && objectDate.getMinutes() < 15) {
+        if (
+          objectDate.getHours() === 0
+          && objectDate.getMinutes() >= 0 && objectDate.getMinutes() < 15) {
           dayPredictArgo.dayPredictArgo(id, latitude, longitude, 1);
-          const emerg = kpEmergency(id).then((d) => {
-            Console.log('d is', d);
-            return d;
-          });
-          Console.log('gogo');
+          const emerg = await kpEmergency(id);
           if (actions === null) {
-            Console.log('emegererere ', emerg);
             return emerg;
           }
         }
         return actions;
       })
       .then((forecastAction) => {
-        Console.log('forecastAction is ', forecastAction);
         const sense = PiInfo.findOne({ id }).exec();
         return sense.then((senseData) => {
           const premsg = { action: [] };
