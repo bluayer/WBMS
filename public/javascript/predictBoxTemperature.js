@@ -77,7 +77,13 @@ const predictBoxTemperature = async (id, latitude, longitude, day) => {
       await PiInfo.findOneAndUpdate({ id }, {
         tempMin: coldLoc.coldLoc(temp.tempMin, boxT),
       }, { new: true });
+    } else {
+      const boxT = createBoxT(todayT, 2.0, 2.0);
+      daysBoxT.push(boxT);
     }
+  } else {
+    const boxT = createBoxT(todayT, 2.0, 2.0);
+    daysBoxT.push(boxT);
   }
 
   // boxT+date Array
