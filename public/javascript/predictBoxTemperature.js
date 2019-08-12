@@ -63,6 +63,7 @@ const predictBoxTemperature = async (id, latitude, longitude, day) => {
       todayTMin = todayT[i];
     }
   }
+  Console.log(todayTMax, todayTMin);
   // difference between the highs and lows today
   if ((todayTMax - todayTMin) < 10) { // small difference
     if (todayTMin > 28) { // HOT strategy
@@ -77,7 +78,13 @@ const predictBoxTemperature = async (id, latitude, longitude, day) => {
       await PiInfo.findOneAndUpdate({ id }, {
         tempMin: coldLoc.coldLoc(temp.tempMin, boxT),
       }, { new: true });
+    } else {
+      const boxT = createBoxT(todayT, 2.0, 2.0);
+      daysBoxT.push(boxT);
     }
+  } else {
+    const boxT = createBoxT(todayT, 2.0, 2.0);
+    daysBoxT.push(boxT);
   }
 
   // boxT+date Array
