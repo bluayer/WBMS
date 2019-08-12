@@ -6,30 +6,30 @@ const coldLoc = require('./coldLoc');
 
 const Console = console;
 
-const createPackT = (todayT, positiveI, negativeI) => {
-  // 외부온도 기반으로 패키지 온도 예측 배열 생성
-  const packT = [];
+const createBoxT = (todayT, positiveI, negativeI) => {
+  // predict inside temperature of battery box by getting outside temperature
+  const boxT = [];
   const firstTodayT = Number(todayT[0]);
-  packT[0] = firstTodayT;
+  boxT[0] = firstTodayT;
   for (let i = 0; i < todayT.length - 1; i += 1) {
     const inclination = Number((todayT[i + 1] - todayT[i]).toFixed(3));
-    if (inclination > 0) { // 기울기가 양수
-      packT[i + 1] = Number((packT[i] + (Math.abs(inclination) + positiveI)).toFixed(3));
-    } else if (inclination < 0) { // 기울기가 음수
-      packT[i + 1] = Number((packT[i] - (Math.abs(inclination) + negativeI)).toFixed(3));
-    } else { // 기울기가 0
-      packT[i + 1] = Number(packT[i]);
+    if (inclination > 0) {
+      boxT[i + 1] = Number((boxT[i] + (Math.abs(inclination) + positiveI)).toFixed(3));
+    } else if (inclination < 0) {
+      boxT[i + 1] = Number((boxT[i] - (Math.abs(inclination) + negativeI)).toFixed(3));
+    } else {
+      boxT[i + 1] = Number(boxT[i]);
     }
   }
-  return packT;
+  return boxT;
 };
 
-const dayPredictArgo = async (id, latitude, longitude, day) => {
+const predictBoxTemperature = async (id, latitude, longitude, day) => {
   const lat = latitude;
   const lon = longitude;
   const days = (day - 1) * 8;
 
-  const daysPackT = [];
+  const daysBoxT = [];
 
   const temp = await PiInfo.findOne({ id }).exec();
 
@@ -50,7 +50,7 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
     weather[i] = apiData[i].weather[0].main;
     dateArr[i] = apiData[i].dt_txt;
   }
-  // 하루 최고, 최저 기온
+  // the highs and lows today
   const todayT = [];
   let todayTMax = temperatureArr[days];
   let todayTMin = temperatureArr[days];
@@ -63,28 +63,28 @@ const dayPredictArgo = async (id, latitude, longitude, day) => {
       todayTMin = todayT[i];
     }
   }
-  // 일교차로 먼저 분류
-  if ((todayTMax - todayTMin) < 15) { // 일교차 작은경우
-    if (todayTMax > 20) { // HOT strategy
-      daysPackT.push(createPackT(todayT, 0.9, 0.3));
+  // difference between the highs and lows today
+  if ((todayTMax - todayTMin) < 10) { // small difference
+    if (todayTMin > 28) { // HOT strategy
+      const boxT = createBoxT(todayT, 2.2, 2.0);
+      daysBoxT.push(boxT);
       await PiInfo.findOneAndUpdate({ id }, {
-        tempMax: hotLoc.hotLoc(temp.tempMax, createPackT(todayT, 0.9, 0.3), weather),
+        tempMax: hotLoc.hotLoc(temp.tempMax, boxT, weather),
       }, { new: true });
-    } else if (todayTMin < 5) { // ColdLoc strategy
-      daysPackT.push(createPackT(todayT, 0.03, 0.08));
+    } else if (todayTMax < 8) { // ColdLoc strategy
+      const boxT = createBoxT(todayT, 2.0, 2.2);
+      daysBoxT.push(boxT);
       await PiInfo.findOneAndUpdate({ id }, {
-        tempMin: coldLoc.coldLoc(temp.tempMin, createPackT(todayT, 0.03, 0.08)),
+        tempMin: coldLoc.coldLoc(temp.tempMin, boxT),
       }, { new: true });
     }
   }
 
-  // packT+date Array
+  // boxT+date Array
   for (let i = 0; i < 8; i += 1) {
-    daysPackT[0][i] += (`/${dateArr[days + i]}`);
+    daysBoxT[0][i] += (`/${dateArr[days + i]}`);
   }
-  return daysPackT;
-  // const dateAPI = await new Date(apiData[0].dt_txt);
-  // await Console.log(date);
+  return daysBoxT;
 };
 
-module.exports = { dayPredictArgo };
+module.exports = { predictBoxTemperature };

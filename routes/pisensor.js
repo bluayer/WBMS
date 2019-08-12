@@ -10,7 +10,7 @@ const PiAction = require('../models/PiAction');
 // Functions for util
 const calcBatteryRemain = require('../public/javascript/calcBatteryRemain');
 const management = require('../public/javascript/management');
-const dayPredictArgo = require('../public/javascript/dayPredictArgo');
+const predictBoxTemperature = require('../public/javascript/predictBoxTemperature');
 const disconnectedSituation = require('../public/javascript/disconnectedSituation');
 const piLocationFunc = require('../public/javascript/piLocationFunc');
 
@@ -183,7 +183,7 @@ router.post('/', async (req, res) => {
           objectDate.getHours() === 0
           && objectDate.getMinutes() >= 0 && objectDate.getMinutes() < 15) {
           // If it's extreme weather, set tempMin, tempMax
-          dayPredictArgo.dayPredictArgo(id, latitude, longitude, 1);
+          predictBoxTemperature.predictBoxTemperature(id, latitude, longitude, 1);
           // Check kp emergenct(geomagnetic storm)
           const emerg = await kpEmergency(id);
           if (actions === null) {

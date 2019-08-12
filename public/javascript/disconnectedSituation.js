@@ -1,9 +1,9 @@
-const dayPredictArgo = require('./dayPredictArgo');
+const predictBoxTemperature = require('./predictBoxTemperature');
 const management = require('./management');
 const PiInfo = require('../../models/PiInfo');
 
 const getOneDayAction = (id, latitude, longitude, k) => {
-  const oneDayAction = dayPredictArgo.dayPredictArgo(id, latitude, longitude, k)
+  const oneDayAction = predictBoxTemperature.predictBoxTemperature(id, latitude, longitude, k)
     .then((packageTemp) => {
       const actionArray = PiInfo.find({ id }).exec().then((packageData) => {
         const res = [];
