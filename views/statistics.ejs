@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WBMS</title>
+  <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link href="/stylesheet/deco.css" rel="stylesheet" type="text/css" >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+
+</head> 
+<body>
+  <nav>
+    <h1>WBMS</h1>
+    <div class="real">
+      <div class="search-container">
+        <form action="/action_page.php">
+          <input type="text" placeholder="Search.." name="search">
+          <button type="submit"><i class="fa fa-search"></i></button>
+        </form>
+      </div>
+      <a href="/main">Maps</a>
+
+    </div>  
+  </nav>
+  <article>
+  <div id=alarm>EMERGENCY</div>
+    <div id="emergency">
+      <p> - Purdue : Only 15% of battery left.</p>
+      <p> - West Lafayette</p>
+      <p> - Chicago</p>
+    </div>
+  
+  <div id="content">
+    <div class="waggle_common" id="waggle_indiv">
+     <p class="title">Purdue</p> 
+     <!-- <img src="/img/sample_graph.jpg">
+     <img src="/img/sample_graph.jpg"> -->
+     <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/822384/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15"></iframe>
+
+    </div>
+    <div class="waggle_common" id="waggle_total">
+     <p class="title">Total</p>
+    </div>
+  </div>
+
+
+  </article>  
+  
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Statistic</title>
+    <% include('./header.ejs') %>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+  </head>
+  <body>
+    <h1>It's statistic <%= id %> page</h1>
+
+    <canvas id="myChart"></canvas>
+    <style>
+    canvas{
+      width: 1000px !important;
+      height: 600px !important;
+    }
+    </style>
+    <script>
+      const id = <%= id %>;
+      const temperatures = [<%= statisticData.temperatures %>];
+      const batteryRemains = [<%= statisticData.batteryRemains %>];
+      let date = "<%= statisticData.dates %>";
+      let hard = ["20:1", "20:2", "20:3", "20:4", "20:5", "20:6", "20:7"];
+      date = date.split(',');
+      date.reverse();
+      temperatures.reverse();
+      batteryRemains.reverse();
+      console.log(date);
+      console.log(temperatures);
+      console.log(batteryRemains);
+      const myChart = new Chart(document.getElementById("myChart"),{
+        "type": "line",
+        "data": {
+          "labels": date,
+          "datasets":[{
+            "label": "SOC",
+            "data": batteryRemains,
+            "fill": false,
+            "borderColor": "rgb(75, 192, 192)",
+            "lineTension": 0.1
+          },
+          {
+            "label": "Temperature",
+            "data": temperatures,
+            "fill": false,
+            "borderColor": "red",
+            "lineTension": 0.1
+          }]
+        },
+        "options": {
+          title: {
+            display: true,
+            text: `Waggle in ${id}`
+          },
+          scales: {
+            yAxes: [{
+              ticks: {
+                suggestedMin: 0,
+                suggestedMax: 100
+              }
+            }]
+          },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    </script>
+  </body>

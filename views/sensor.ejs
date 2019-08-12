@@ -1,0 +1,17 @@
+<div class="row ">
+  <h1>Show sensor DB </h1>
+  <% sensors.forEach((sensor) => {%>
+    <a> id : </a> <%= sensor.id %> <br>
+    <a> Temperature : </a> <%= sensor.temperature %> <br>
+    <a> batteryRemain : </a> <%= sensor.batteryRemain %> <br>
+    <a> latitude : </a> <%= sensor.latitude %> <br>
+    <a> longitude : </a> <%= sensor.longitude %> <br>
+    <a> kpMax : </a> <%= sensor.kpMax %> <br>
+    <a> Date : </a> <%= sensor.date %> <br><br>
+
+    <% if (sensor.batteryRemain < 20) { %>
+      <h3> WARNING!!! </h3><br>
+      <a> Only <%= sensor.batteryRemain %> % remain </a> <br>
+    <% } %>
+  <% }); %>
+</div>

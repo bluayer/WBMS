@@ -1,0 +1,9 @@
+<div class="row ">
+  <h1>Show api Data </h1>
+  <% apiData.forEach(d => {%>
+    <a> Time : <%= d.dt_txt %> </a><br>
+    <a> Temp : <%= d.main.temp %> </a><br>
+    <a> Weather: <%= d.weather[0].main %> ( <%= d.weather[0].description %> )</a><br>
+    <br>
+  <% }); %>
+</div>
