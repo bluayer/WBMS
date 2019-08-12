@@ -63,7 +63,6 @@ const predictBoxTemperature = async (id, latitude, longitude, day) => {
       todayTMin = todayT[i];
     }
   }
-  Console.log(todayTMax, todayTMin);
   // difference between the highs and lows today
   if ((todayTMax - todayTMin) < 10) { // small difference
     if (todayTMin > 28) { // HOT strategy
