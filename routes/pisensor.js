@@ -187,27 +187,29 @@ router.post('/', async (req, res) => {
           // Check kp emergenct(geomagnetic storm)
           const emerg = await kpEmergency(id);
           if (actions === null) {
-            return emerg;
+            return [emerg, true];
           }
         }
-        return actions;
+        return [actions, false];
       })
       .then((forecastAction) => {
-        const sense = PiInfo.findOne({ id }).exec();
-        return sense.then((senseData) => {
-          const premsg = { action: [] };
+        return PiInfo.findOne({ id }).exec().then((senseData) => {
+          const premsg = { communication: true, action: [] };
           const defaultAction = management.makeMessage(
             temperature, senseData.tempMin, senseData.tempMax, batteryRemain,
           );
           // Delay format : 'hour/min/sec'
           defaultAction.delay = '0/0/0';
           premsg.action.push(defaultAction);
-          if (forecastAction !== null) {
-            forecastAction.forEach((action) => {
+          if (forecastAction[0] !== null) {
+            forecastAction[0].forEach((action) => {
               const newAction = action;
               newAction.delay = calcTimeDelay(utcDate, action.delay);
               premsg.action.push(newAction);
             });
+            if (forecastAction[1] === false) {
+              premsg.communication = false;
+            }
           }
           return premsg;
         });
