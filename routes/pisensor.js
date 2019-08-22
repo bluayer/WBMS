@@ -147,7 +147,7 @@ router.get('/', (req, res) => {
 // Send actions to raspberry pi.
 router.post('/', async (req, res) => {
   // Console.log(req.body);
-  const tempMin = 5;
+  const tempMin = 0;
   const tempMax = 35;
 
   const {
