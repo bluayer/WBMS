@@ -4,11 +4,18 @@
   "description": "Waggle Battery Management System",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js"
   },
-  "author": "wagglewaggle",
-  "license": "ISC",
+  "bugs": {
+    "email": "ijacsong98@gmail.com"
+  },
+  "contributors": [
+    "Jungwoo Song <wjddn0728@cau.ac.kr>",
+    "YooHyuk Lee <2015104204@khu.ac.kr>",
+    "HyeonKyeong Kwon <khk04078@swu.ac.kr>",
+    "SeHyun Hwang <hsh0627@sogang.ac.kr>"
+  ],
+  "license": "MIT",
   "dependencies": {
     "axios": "^0.19.0",
     "body-parser": "^1.19.0",
